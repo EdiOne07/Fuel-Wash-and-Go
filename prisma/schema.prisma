@@ -1,0 +1,43 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "node_modules/@prisma/client"
+
+}
+enum Status {
+  Empty
+  AverageBusy
+  VeryBusy
+}
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  username  String
+  location String
+  password String @unique
+  favourite_station_id Int 
+}
+model GasStations{
+  id    Int     @id @default(autoincrement())
+  washing_station_available Boolean
+  name String
+  gas_price Int
+  location_id Int
+  status   Status  @default(Empty)
+  rating Int
+}
+model Washing_station{
+  id    Int     @id @default(autoincrement())
+  gas_station_id Int
+  standard_wash_price Int
+  comfort_wash_price Int
+  premium_wash_price Int
+  availability Boolean
+}
