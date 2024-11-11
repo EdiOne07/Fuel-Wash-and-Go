@@ -8,7 +8,7 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
-  output   = "node_modules/@prisma/client"
+  output   = "node_modules/.prisma/client"
 
 }
 enum Status {
@@ -40,4 +40,13 @@ model Washing_station{
   comfort_wash_price Int
   premium_wash_price Int
   availability Boolean
+}
+model Location{
+  id    Int     @id @default(autoincrement())
+  place_id String
+  name String
+  latitude Int
+  longitude Int
+  adress String
+  types String
 }
