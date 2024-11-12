@@ -22,7 +22,8 @@ model User {
   username  String
   location String
   password String @unique
-  favourite_station_id Int 
+  favourite_station_id Int?
+  favourite_station GasStations? @relation(fields: [favourite_station_id], references:[id]) 
 }
 model GasStations{
   id    Int     @id @default(autoincrement())
@@ -32,6 +33,10 @@ model GasStations{
   location_id Int
   status   Status  @default(Empty)
   rating Int
+  users User[]
+  washing_station_id Int?
+  washing_station Washing_station? @relation(fields:[washing_station_id],references:[id])
+// location Location @relation(fields:[location_id],references:[id])
 }
 model Washing_station{
   id    Int     @id @default(autoincrement())
@@ -39,7 +44,7 @@ model Washing_station{
   standard_wash_price Int
   comfort_wash_price Int
   premium_wash_price Int
-  availability Boolean
+  gas_stations GasStations[]
 }
 model Location{
   id    Int     @id @default(autoincrement())
@@ -49,4 +54,5 @@ model Location{
   longitude Int
   adress String
   types String
+  //gas_stations GasStations[]
 }
