@@ -4,7 +4,7 @@ export enum Status {
     VeryBusy = "VeryBusy"
   }
   
-  export interface GasStation {
+export interface GasStation {
     id: number;
     washing_station_available: boolean;
     name: string;

@@ -1,14 +1,14 @@
 // src/controllers/stationController.ts
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { Status } from '@prisma/client';
+import { Status } from 'src/models/gasStation';
 
 const prisma = new PrismaClient();
 
 // Retrieve a list of stations with optional filters
 export const getStations = async (req: Request, res: Response): Promise<void> => {
   const { type, location, price_range, rating } = req.query;
-
+  
   try {
     const stations = await prisma.gasStations.findMany({
       where: {
