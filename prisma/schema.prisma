@@ -17,13 +17,13 @@ enum Status {
   VeryBusy
 }
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  username  String
-  location String
-  password String @unique
+  id                   Int        @id @default(autoincrement())
+  email                String     @unique
+  username             String
+  location             String
+  firebaseUid          String     @unique
   favourite_station_id Int?
-  favourite_station GasStations? @relation(fields: [favourite_station_id], references:[id]) 
+  favouriteStation     GasStations? @relation(fields: [favourite_station_id], references:[id])
 }
 model GasStations{
   id    Int     @id @default(autoincrement())
