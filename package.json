@@ -7,11 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "concurrently \"npm run server\" \"npm run client\"",
     "server": "ts-node-dev server/src/index.ts",
-    "client": "npm start --prefix client", 
+    "client": "npm start --prefix client",
     "clean": "rmdir /s /q node_modules",
     "prisma:migrate": "node prisma-load-env.js && npx prisma migrate dev"
-
-
   },
   "keywords": [],
   "author": "",
@@ -29,6 +27,7 @@
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
+    "dotenv": "^16.4.5",
     "express": "^4.21.1"
   }
 }
