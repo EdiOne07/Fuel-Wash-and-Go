@@ -10,5 +10,5 @@
     "include": [
       "client",
       "server"
-, "prisma/DatabaseTest.ts"    ]
+, "prisma/DatabaseTest.ts", "prisma"    ]
   }
