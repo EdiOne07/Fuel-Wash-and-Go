@@ -25,6 +25,7 @@ model User {
 model GasStations {
   id                        Int     @id @default(autoincrement())
   washing_station_available Boolean
+
   name                      String
   gas_price                 Int
   location_id               Int
@@ -48,4 +49,5 @@ model Location{
   longitude     Int
   adress        String
   types         String
+
 }
