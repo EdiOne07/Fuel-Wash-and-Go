@@ -5,9 +5,9 @@ import { authenticate } from '../middleware/authMiddleware';
 
 const router = Router();
 
-router.post('/register', authenticate, userController.registerUser);
-router.get('/profile', authenticate, userController.getUserProfile);
-router.put('/profile', authenticate, userController.updateUserProfile);
+router.post('/api/register', authenticate, userController.registerUser);
+router.get('/api/profile', authenticate, userController.getUserProfile);
+router.put('/api/profile', authenticate, userController.updateUserProfile);
 router.delete('profile', authenticate, userController.deleteUserProfile);
 // In your userRoutes.ts
 router.get('/test-auth', (req, res) => {
