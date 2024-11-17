@@ -3,6 +3,7 @@
       "name": "Fuel Wash and Go",
       "slug": "fuel-wash-and-go",
       "version": "1.0.0",
+      "entryPoint": "./App.js",
       "orientation": "portrait",
       "icon": "./assets/icon.png",
       "userInterfaceStyle": "light",
