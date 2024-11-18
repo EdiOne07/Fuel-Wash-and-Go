@@ -3,8 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@react-native-google-signin/google-signin": "^13.1.0",
     "@react-navigation/native": "^7.0.3",
-    "@react-navigation/stack": "^7.0.3",
+    "@react-navigation/stack": "^7.0.4",
     "@react-oauth/google": "^0.12.1",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
@@ -25,8 +26,10 @@
     "react-native-safe-area-context": "^4.14.0",
     "react-native-screens": "^4.1.0",
     "react-native-vector-icons": "^10.2.0",
+    "react-router-dom": "^6.28.0",
     "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "expo-auth-session": "~6.0.0"
   },
   "scripts": {
     "start": "react-scripts start",
