@@ -19,7 +19,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     const user = await userService.createUser(firebaseUid, email, username, location);
     res.status(201).json(user);
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    res.status(500).json({ error: 'Internal Server Error'});
   }
 };
 
@@ -34,7 +34,7 @@ export const getUserProfile = async (req: Request, res: Response): Promise<void>
     }
     res.status(200).json(user);
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    res.status(500).json({ error: 'Internal Server Error'});
   }
 };
 
@@ -50,7 +50,7 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<vo
     }
     res.status(200).json(updatedUser);
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    res.status(500).json({ error: 'Internal Server Error'});
   }
 };
 
@@ -65,7 +65,7 @@ export const deleteUserProfile = async (req: Request, res: Response): Promise<vo
     }
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
