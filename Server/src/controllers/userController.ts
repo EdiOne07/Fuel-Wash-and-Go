@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import * as userService from '../services/userService';
-import admin from 'firebase-admin';
+import admin from '../config/firebase';
+import { getUserByFirebaseUid } from '../services/userService';
+import User from '../models/user';
+
 
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   const { email, username, location } = req.body;
@@ -78,6 +81,33 @@ export const logoutUser = async (req: Request, res: Response): Promise<void> => 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     res.status(500).json({ error: 'Internal Server Error', details: errorMessage });
+  }
+};
+
+export const loginUser = async (req: Request, res: Response): Promise<void> => {
+  const { email, password } = req.body;
+
+  try {
+    const userRecord = await admin.auth().getUserByEmail(email);
+    const firebaseUid = userRecord.uid;
+
+    let user = await getUserByFirebaseUid(firebaseUid);
+    if (user !== null) {
+      // Create a new user in your database
+      user = await User.create({
+        firebaseUid,
+        email,
+        username: userRecord.displayName || email,
+        location: '', // Set default or fetch from user input
+      });
+    }
+
+    // At this point, 'user' is guaranteed to be non-null
+    const customToken = await admin.auth().createCustomToken(firebaseUid);
+
+    res.status(200).json({ message: 'Login successful', token: customToken });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error', details: (error as Error).message });
   }
 };
 
