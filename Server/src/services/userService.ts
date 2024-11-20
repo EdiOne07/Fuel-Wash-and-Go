@@ -1,41 +1,30 @@
 import User, { IUser } from '../models/user';
 
-// Create a new user
 export const createUser = async (
   firebaseUid: string,
   email: string,
   username: string,
   location: string
 ): Promise<IUser> => {
-  const newUser = new User({
-    firebaseUid,
-    email,
-    username,
-    location,
-  });
-
-  return await newUser.save();
+  const user = new User({ firebaseUid, email, username, location });
+  return await user.save();
 };
 
-// Get a user by Firebase UID
 export const getUserByFirebaseUid = async (firebaseUid: string): Promise<IUser | null> => {
   return await User.findOne({ firebaseUid });
 };
 
-// Update user details
-export const updateUserById = async (
-  userId: string,
+export const updateUserProfile = async (
+  firebaseUid: string,
   updateData: Partial<IUser>
 ): Promise<IUser | null> => {
-  return await User.findByIdAndUpdate(userId, updateData, { new: true });
+  return await User.findOneAndUpdate({ firebaseUid }, updateData, { new: true });
 };
 
-// Delete a user
-export const deleteUserById = async (userId: string): Promise<IUser | null> => {
-  return await User.findByIdAndDelete(userId);
+export const deleteUserProfile = async (firebaseUid: string): Promise<IUser | null> => {
+  return await User.findOneAndDelete({ firebaseUid });
 };
 
-// Get user details by ID
-export const getUserById = async (userId: string): Promise<IUser | null> => {
-  return await User.findById(userId);
+export const getUserProfile = async (firebaseUid: string): Promise<IUser | null> => {
+  return await User.findOne({ firebaseUid }).populate('favouriteStationId'); 
 };
