@@ -2,7 +2,6 @@ import { Router } from 'express';
 import * as washingStationController from '../controllers/washingStationsController';
 import { authenticate } from '../middleware/authMiddleware';
 
-
 const router = Router();
 
 router.get('/washing-stations', authenticate, washingStationController.getWashingStations);

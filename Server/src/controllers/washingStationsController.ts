@@ -6,7 +6,8 @@ export const getWashingStations = async (req: Request, res: Response): Promise<v
     const washingStations = await washingStationService.getWashingStations();
     res.status(200).json(washingStations);
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    res.status(500).json({ error: 'Internal Server Error', details: errorMessage });
   }
 };
 
@@ -21,7 +22,8 @@ export const getWashingStationById = async (req: Request, res: Response): Promis
     }
     res.status(200).json(washingStation);
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    res.status(500).json({ error: 'Internal Server Error', details: errorMessage });
   }
 };
 
@@ -32,7 +34,8 @@ export const createWashingStation = async (req: Request, res: Response): Promise
     const newWashingStation = await washingStationService.createWashingStation(data);
     res.status(201).json(newWashingStation);
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    res.status(500).json({ error: 'Internal Server Error', details: errorMessage });
   }
 };
 
@@ -48,7 +51,8 @@ export const updateWashingStation = async (req: Request, res: Response): Promise
     }
     res.status(200).json(updatedWashingStation);
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    res.status(500).json({ error: 'Internal Server Error', details: errorMessage });
   }
 };
 
@@ -63,6 +67,7 @@ export const deleteWashingStation = async (req: Request, res: Response): Promise
     }
     res.status(200).json({ message: 'Washing Station deleted successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    res.status(500).json({ error: 'Internal Server Error', details: errorMessage });
   }
 };
