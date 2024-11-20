@@ -2,7 +2,7 @@ import admin from 'firebase-admin';
 
 // Initialize Firebase Admin SDK
 admin.initializeApp({
-  credential: admin.credential.applicationDefault(), // or use admin.credential.cert(serviceAccount)
+  credential: admin.credential.applicationDefault(), // Use a service account for production
 });
 
 export default admin;
