@@ -1,8 +1,6 @@
 import { Router } from 'express';
 import * as gasStationController from '../controllers/gasStationsController';
-import { authenticate } from '../middleware/authMiddleware'; // Assuming you have this middleware for authentication
-import admin from '../config/firebase';
-
+import { authenticate } from '../middleware/authMiddleware';
 
 const router = Router();
 
