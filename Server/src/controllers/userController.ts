@@ -1,30 +1,32 @@
 import { Request, Response } from 'express';
 import * as userService from '../services/userService';
 import admin from '../config/firebase';
-import { getUserByFirebaseUid } from '../services/userService';
-import User from '../models/user';
+import * as UserService from '../services/userService';
+
+
+
 
 
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
-  const { email, username, location } = req.body;
-
+  const { email, username, location, password } = req.body;
   try {
-    // Verify Firebase token to get UID
-    const decodedToken = await admin.auth().verifyIdToken(req.headers.authorization?.split('Bearer ')[1] || '');
-    const firebaseUid = decodedToken.uid;
-
-    const existingUser = await userService.getUserByFirebaseUid(firebaseUid);
-    if (existingUser) {
-      res.status(400).json({ error: 'User already exists' });
-      return;
-    }
-
-    const user = await userService.createUser(firebaseUid, email, username, location);
-    res.status(201).json(user);
+    await UserService.register({ email, username, location, password });
+    res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error'});
+    res.status(500).json({ error: 'Error registering user', details: (error as Error).message });
   }
 };
+
+export const loginUser = async (req: Request, res: Response): Promise<void> => {
+  const { email, password } = req.body;
+  try {
+    const token = await UserService.login(email, password);
+    res.status(200).json({ message: 'Login successful', token });
+  } catch (error) {
+    res.status(400).json({ error: 'Error logging in', details: (error as Error).message });
+  }
+};
+
 
 export const getUserProfile = async (req: Request, res: Response): Promise<void> => {
   const firebaseUid = res.locals.uid; // Set in authentication middleware
@@ -83,31 +85,3 @@ export const logoutUser = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({ error: 'Internal Server Error', details: errorMessage });
   }
 };
-
-export const loginUser = async (req: Request, res: Response): Promise<void> => {
-  const { email, password } = req.body;
-
-  try {
-    const userRecord = await admin.auth().getUserByEmail(email);
-    const firebaseUid = userRecord.uid;
-
-    let user = await getUserByFirebaseUid(firebaseUid);
-    if (user !== null) {
-      // Create a new user in your database
-      user = await User.create({
-        firebaseUid,
-        email,
-        username: userRecord.displayName || email,
-        location: '', 
-      });
-    }
-
-    // At this point, 'user' is guaranteed to be non-null
-    const customToken = await admin.auth().createCustomToken(firebaseUid);
-
-    res.status(200).json({ message: 'Login successful', token: customToken });
-  } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error', details: (error as Error).message });
-  }
-};
-
