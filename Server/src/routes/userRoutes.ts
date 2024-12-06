@@ -1,15 +1,20 @@
 import { Router } from 'express';
-import * as userController from '../controllers/userController';
-import { authenticateToken } from '../middleware/authMiddleware';
+import {
+  registerUser,
+  loginUser,
+  getUserProfile,
+  updateUserProfile,
+  deleteUserProfile,
+  logoutUser,
+} from '../controllers/userController';
 
 const router = Router();
 
-router.post('/register', userController.registerUser);
-router.post('/login', userController.loginUser);
-router.get('/profile',authenticateToken , userController.getUserProfile); 
-router.put('/profile', authenticateToken, userController.updateUserProfile); 
-router.delete('/profile', authenticateToken, userController.deleteUserProfile); 
-router.post('/logout', authenticateToken, userController.logoutUser); 
-
+router.post('/register', registerUser);
+router.post('/login', loginUser);
+router.get('/profile', getUserProfile);
+router.put('/profile', updateUserProfile);
+router.delete('/profile', deleteUserProfile);
+router.post('/logout', logoutUser);
 
 export default router;

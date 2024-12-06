@@ -1,65 +1,78 @@
-import jwt from 'jsonwebtoken';
 import User, { IUser } from '../models/user';
-import bcrypt from 'bcrypt';
+import md5 from 'md5';
+import { v4 as uuidv4 } from 'uuid';
 
 interface RegisterInput {
+  name: string;
   email: string;
-  username: string;
-  location: string;
   password: string;
 }
 
-export const register = async (input: RegisterInput): Promise<void> => {
-  const { email, username, location, password } = input;
+export const registerUser = async ({ name, email, password }: RegisterInput): Promise<void> => {
+  const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const namePattern = /^[a-zA-Z\s]+$/;
+  const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{5,}$/;
+
+  if (!emailPattern.test(email)) {
+    throw new Error('Invalid email format');
+  }
+  if (!namePattern.test(name)) {
+    throw new Error('Name should contain only letters and spaces');
+  }
+  if (!passwordPattern.test(password)) {
+    throw new Error('Password should be at least 5 characters long and include an uppercase letter and a number');
+  }
+
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    throw new Error('User already exists');
+    throw new Error('Email is already registered');
   }
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const newUser = new User({ email, username, location, password: hashedPassword });
+
+  const encryptedPassword = md5(password);
+  const sessionId = uuidv4();
+
+  const newUser = new User({
+    name,
+    email,
+    password: encryptedPassword,
+    sessionId,
+  });
+
   await newUser.save();
 };
 
-export const login = async (email: string, password: string): Promise<string> => {
-  const user = await User.findOne({ email });
+export const loginUser = async (email: string, password: string): Promise<string> => {
+  if (!email || !password) {
+    throw new Error('Email and password are required');
+  }
+
+  const user = await User.findOne({ email, password: md5(password) });
   if (!user) {
     throw new Error('Invalid email or password');
   }
-  const isPasswordValid = await user.comparePassword(password);
-  if (!isPasswordValid) {
-    throw new Error('Invalid email or password');
-  }
-  const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET as string, { expiresIn: '1h' });
-  return token;
+
+  user.sessionId = uuidv4();
+  await user.save();
+
+  return user.sessionId;
 };
 
+export const getUserProfile = async (sessionId: string): Promise<IUser | null> => {
+  return await User.findOne({ sessionId });
+};
 
+export const updateUserProfile = async (sessionId: string, updateData: Partial<IUser>): Promise<IUser | null> => {
+  return await User.findOneAndUpdate({ sessionId }, updateData, { new: true });
+};
 
-// export const createUser = async (
-//   firebaseUid: string,
-//   email: string,
-//   username: string,
-//   location: string
-// ): Promise<IUser> => {
-//   const user = new User({ firebaseUid, email, username, location });
-//   return await user.save();
-// };
+export const deleteUserProfile = async (sessionId: string): Promise<IUser | null> => {
+  return await User.findOneAndDelete({ sessionId });
+};
 
-// export const getUserByFirebaseUid = async (firebaseUid: string): Promise<IUser | null> => {
-//   return await User.findOne({ firebaseUid });
-// };
-
-// export const updateUserProfile = async (
-//   firebaseUid: string,
-//   updateData: Partial<IUser>
-// ): Promise<IUser | null> => {
-//   return await User.findOneAndUpdate({ firebaseUid }, updateData, { new: true });
-// };
-
-// export const deleteUserProfile = async (firebaseUid: string): Promise<IUser | null> => {
-//   return await User.findOneAndDelete({ firebaseUid });
-// };
-
-// export const getUserProfile = async (firebaseUid: string): Promise<IUser | null> => {
-//   return await User.findOne({ firebaseUid }).populate('favouriteStationId'); 
-// };
+export const logoutUser = async (sessionId: string): Promise<void> => {
+  const user = await User.findOne({ sessionId });
+  if (user) {
+    user.sessionId = undefined;
+    await user.save();
+  }
+};

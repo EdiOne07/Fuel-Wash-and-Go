@@ -1,38 +1,35 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import bcrypt from 'bcrypt';
 
 export interface IUser extends Document {
+  name: string;
   email: string;
-  username: string;
-  location: string;
   password: string;
-  favouriteStationId?: mongoose.Types.ObjectId;
-  comparePassword(candidatePassword: string): Promise<boolean>;
+  sessionId?: string;
+  location?: {
+    type: 'Point';
+    coordinates: [number, number]; // [longitude, latitude]
+  };
 }
 
 const UserSchema = new Schema<IUser>({
+  name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  username: { type: String, required: true },
-  location: { type: String, required: true },
   password: { type: String, required: true },
-  favouriteStationId: { type: mongoose.Schema.Types.ObjectId, ref: 'GasStation' },
+  sessionId: { type: String },
+  location: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point',
+    },
+    coordinates: {
+      type: [Number],
+      default: [0, 0], // Default coordinates
+    },
+  },
 });
 
-// Hash password before saving
-UserSchema.pre<IUser>('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (err) {
-    next(err as mongoose.CallbackError);
-  }
-});
-
-// Compare candidate password with hashed password
-UserSchema.methods.comparePassword = function (candidatePassword: string): Promise<boolean> {
-  return bcrypt.compare(candidatePassword, this.password);
-};
+// Create a 2dsphere index on the location field for geospatial queries
+UserSchema.index({ location: '2dsphere' });
 
 export default mongoose.model<IUser>('User', UserSchema);

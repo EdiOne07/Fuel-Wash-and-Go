@@ -1,87 +1,105 @@
 import { Request, Response } from 'express';
 import * as userService from '../services/userService';
-import admin from '../config/firebase';
-import * as UserService from '../services/userService';
-
-
-
-
 
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
-  const { email, username, location, password } = req.body;
+  const { name, email, password } = req.body;
+
+  console.log(req.body);
   try {
-    await UserService.register({ email, username, location, password });
+    await userService.registerUser({ name, email, password });
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Error registering user', details: (error as Error).message });
+    res.status(400).json({ error: (error as Error).message });
   }
 };
 
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
+
   try {
-    const token = await UserService.login(email, password);
-    res.status(200).json({ message: 'Login successful', token });
+    const sessionId = await userService.loginUser(email, password);
+    res.status(200).json({ message: 'Login successful', sessionId });
   } catch (error) {
-    res.status(400).json({ error: 'Error logging in', details: (error as Error).message });
+    res.status(400).json({ error: (error as Error).message });
   }
 };
 
-
 export const getUserProfile = async (req: Request, res: Response): Promise<void> => {
-  const firebaseUid = res.locals.uid; // Set in authentication middleware
+  const { sessionid } = req.headers;
+
+  if (!sessionid || typeof sessionid !== 'string') {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
 
   try {
-    const user = await userService.getUserProfile(firebaseUid);
+    const user = await userService.getUserProfile(sessionid);
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;
     }
+
     res.status(200).json(user);
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error'});
+    res.status(500).json({ error: 'Internal Server Error', details: (error as Error).message });
   }
 };
 
 export const updateUserProfile = async (req: Request, res: Response): Promise<void> => {
-  const firebaseUid = res.locals.uid;
+  const { sessionid } = req.headers;
   const updateData = req.body;
 
+  if (!sessionid || typeof sessionid !== 'string') {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
   try {
-    const updatedUser = await userService.updateUserProfile(firebaseUid, updateData);
+    const updatedUser = await userService.updateUserProfile(sessionid, updateData);
     if (!updatedUser) {
       res.status(404).json({ error: 'User not found' });
       return;
     }
+
     res.status(200).json(updatedUser);
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error'});
+    res.status(500).json({ error: 'Internal Server Error', details: (error as Error).message });
   }
 };
 
 export const deleteUserProfile = async (req: Request, res: Response): Promise<void> => {
-  const firebaseUid = res.locals.uid;
+  const { sessionid } = req.headers;
+
+  if (!sessionid || typeof sessionid !== 'string') {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
 
   try {
-    const deletedUser = await userService.deleteUserProfile(firebaseUid);
+    const deletedUser = await userService.deleteUserProfile(sessionid);
     if (!deletedUser) {
       res.status(404).json({ error: 'User not found' });
       return;
     }
+
     res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: 'Internal Server Error', details: (error as Error).message });
   }
 };
 
 export const logoutUser = async (req: Request, res: Response): Promise<void> => {
-  const firebaseUid = res.locals.uid;
+  const { sessionid } = req.headers;
+
+  if (!sessionid || typeof sessionid !== 'string') {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
 
   try {
-    await admin.auth().revokeRefreshTokens(firebaseUid);
+    await userService.logoutUser(sessionid);
     res.status(200).json({ message: 'User logged out successfully' });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    res.status(500).json({ error: 'Internal Server Error', details: errorMessage });
+    res.status(500).json({ error: 'Internal Server Error', details: (error as Error).message });
   }
 };
