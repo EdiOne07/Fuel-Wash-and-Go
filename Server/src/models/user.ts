@@ -4,6 +4,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  role: 'admin' | 'user'; 
   sessionId?: string;
   location?: {
     type: 'Point';
@@ -15,6 +16,7 @@ const UserSchema = new Schema<IUser>({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
+  role: { type: String, enum: ['admin', 'user'], default: 'user' }, // Default role is 'user'
   sessionId: { type: String },
   location: {
     type: {
@@ -29,7 +31,7 @@ const UserSchema = new Schema<IUser>({
   },
 });
 
-// Create a 2dsphere index on the location field for geospatial queries
+// 2dsphere index for geospatial queries
 UserSchema.index({ location: '2dsphere' });
 
 export default mongoose.model<IUser>('User', UserSchema);

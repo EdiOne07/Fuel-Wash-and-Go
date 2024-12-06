@@ -6,27 +6,20 @@ interface RegisterInput {
   name: string;
   email: string;
   password: string;
+  role?: 'admin' | 'user';
 }
 
-export const registerUser = async ({ name, email, password }: RegisterInput): Promise<void> => {
+export const registerUser = async ({ name, email, password, role = 'user' }: RegisterInput): Promise<void> => {
   const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const namePattern = /^[a-zA-Z\s]+$/;
   const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{5,}$/;
 
-  if (!emailPattern.test(email)) {
-    throw new Error('Invalid email format');
-  }
-  if (!namePattern.test(name)) {
-    throw new Error('Name should contain only letters and spaces');
-  }
-  if (!passwordPattern.test(password)) {
-    throw new Error('Password should be at least 5 characters long and include an uppercase letter and a number');
-  }
+  if (!emailPattern.test(email)) throw new Error('Invalid email format');
+  if (!namePattern.test(name)) throw new Error('Name should contain only letters and spaces');
+  if (!passwordPattern.test(password)) throw new Error('Password must include at least 5 characters, an uppercase letter, and a number');
 
   const existingUser = await User.findOne({ email });
-  if (existingUser) {
-    throw new Error('Email is already registered');
-  }
+  if (existingUser) throw new Error('Email is already registered');
 
   const encryptedPassword = md5(password);
   const sessionId = uuidv4();
@@ -36,20 +29,15 @@ export const registerUser = async ({ name, email, password }: RegisterInput): Pr
     email,
     password: encryptedPassword,
     sessionId,
+    role,
   });
 
   await newUser.save();
 };
 
 export const loginUser = async (email: string, password: string): Promise<string> => {
-  if (!email || !password) {
-    throw new Error('Email and password are required');
-  }
-
   const user = await User.findOne({ email, password: md5(password) });
-  if (!user) {
-    throw new Error('Invalid email or password');
-  }
+  if (!user) throw new Error('Invalid email or password');
 
   user.sessionId = uuidv4();
   await user.save();
@@ -75,4 +63,8 @@ export const logoutUser = async (sessionId: string): Promise<void> => {
     user.sessionId = undefined;
     await user.save();
   }
+};
+
+export const promoteToAdmin = async (userId: string): Promise<IUser | null> => {
+  return await User.findByIdAndUpdate(userId, { role: 'admin' }, { new: true });
 };

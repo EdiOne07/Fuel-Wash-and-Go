@@ -1,16 +1,11 @@
-
-
 import { Request, Response } from 'express';
 import * as stationService from '../services/gasStationService';
+import { AuthenticatedRequest } from '../middleware/authMiddleware';
 
-export const getStations = async (req: Request, res: Response): Promise<void> => {
-  const type = req.query.type as string | undefined;
-  const location = req.query.location as string | undefined;
-  const price_range = req.query.price_range as string | undefined;
-  const rating = req.query.rating as string | undefined;
-
+export const getStations = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const stations = await stationService.getStations({ type, location, price_range, rating });
+    console.log(req);
+    const stations = await stationService.getStations({});
     res.status(200).json(stations);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
@@ -18,7 +13,8 @@ export const getStations = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-export const getStationById = async (req: Request, res: Response): Promise<void> => {
+
+export const getStationById = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { id } = req.params;
 
   try {
@@ -34,7 +30,7 @@ export const getStationById = async (req: Request, res: Response): Promise<void>
   }
 };
 
-export const createStation = async (req: Request, res: Response): Promise<void> => {
+export const createStation = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const stationData = req.body;
 
   try {
@@ -46,7 +42,7 @@ export const createStation = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-export const updateStation = async (req: Request, res: Response): Promise<void> => {
+export const updateStation = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { id } = req.params;
   const updateData = req.body;
 
@@ -63,7 +59,7 @@ export const updateStation = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-export const deleteStation = async (req: Request, res: Response): Promise<void> => {
+export const deleteStation = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { id } = req.params;
 
   try {

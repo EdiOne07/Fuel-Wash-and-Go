@@ -1,20 +1,15 @@
 import { Router } from 'express';
-import {
-  registerUser,
-  loginUser,
-  getUserProfile,
-  updateUserProfile,
-  deleteUserProfile,
-  logoutUser,
-} from '../controllers/userController';
+import * as userController from '../controllers/userController';
+import { authenticate, authorize } from '../middleware/authMiddleware';
 
 const router = Router();
 
-router.post('/register', registerUser);
-router.post('/login', loginUser);
-router.get('/profile', getUserProfile);
-router.put('/profile', updateUserProfile);
-router.delete('/profile', deleteUserProfile);
-router.post('/logout', logoutUser);
+router.post('/register', userController.registerUser);
+router.post('/login', userController.loginUser);
+router.get('/profile', authenticate, userController.getUserProfile);
+router.put('/profile', authenticate, userController.updateUserProfile);
+router.delete('/profile', authenticate, userController.deleteUserProfile);
+router.post('/logout', authenticate, userController.logoutUser);
+router.put('/promote/:userId', authenticate, authorize(['admin']), userController.promoteUserToAdmin);
 
 export default router;

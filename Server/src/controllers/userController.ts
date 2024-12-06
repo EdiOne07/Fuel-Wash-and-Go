@@ -2,11 +2,9 @@ import { Request, Response } from 'express';
 import * as userService from '../services/userService';
 
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
-  const { name, email, password } = req.body;
-
-  console.log(req.body);
+  const { name, email, password, role } = req.body;
   try {
-    await userService.registerUser({ name, email, password });
+    await userService.registerUser({ name, email, password, role });
     res.status(201).json({ message: 'User registered successfully' });
   } catch (error) {
     res.status(400).json({ error: (error as Error).message });
@@ -15,7 +13,6 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
 
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
-
   try {
     const sessionId = await userService.loginUser(email, password);
     res.status(200).json({ message: 'Login successful', sessionId });
@@ -23,6 +20,21 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     res.status(400).json({ error: (error as Error).message });
   }
 };
+
+export const promoteUserToAdmin = async (req: Request, res: Response): Promise<void> => {
+  const { userId } = req.params;
+  try {
+    const updatedUser = await userService.promoteToAdmin(userId);
+    if (!updatedUser) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    res.status(200).json({ message: 'User promoted to admin', user: updatedUser });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error', details: (error as Error).message });
+  }
+};
+
 
 export const getUserProfile = async (req: Request, res: Response): Promise<void> => {
   const { sessionid } = req.headers;
