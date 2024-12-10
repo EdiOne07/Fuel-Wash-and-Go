@@ -1,19 +1,41 @@
 import GasStation, { IGasStation } from '../models/gasStation';
 
 export const getStations = async (filters: {
-  type?: string;
-  location?: string;
-  price_range?: string;
-  rating?: string;
+  latitude?: number;
+  longitude?: number;
+  radius?: number; // in meters
+  status?: string;
+  maxPrice?: number;
+  minRating?: number;
 }): Promise<IGasStation[]> => {
   const query: any = {};
 
-  if (filters.type) query.status = filters.type;
-  if (filters.location) query.locationId = filters.location;
-  if (filters.price_range) query.gasPrice = { $lte: parseFloat(filters.price_range) };
-  if (filters.rating) query.rating = { $gte: parseFloat(filters.rating) };
+  if (filters.status) {
+    query.status = filters.status;
+  }
+  if (filters.maxPrice !== undefined) {
+    query.gasPrice = { $lte: filters.maxPrice };
+  }
+  if (filters.minRating !== undefined) {
+    query.rating = { $gte: filters.minRating };
+  }
 
-  return GasStation.find(query);
+  const aggregationPipeline: any[] = [];
+
+  if (filters.latitude !== undefined && filters.longitude !== undefined && filters.radius !== undefined) {
+    aggregationPipeline.push({
+      $geoNear: {
+        near: { type: 'Point', coordinates: [filters.longitude, filters.latitude] },
+        distanceField: 'distance',
+        maxDistance: filters.radius,
+        spherical: true,
+      },
+    });
+  }
+
+  aggregationPipeline.push({ $match: query });
+
+  return GasStation.aggregate(aggregationPipeline);
 };
 
 export const getStationById = async (id: string): Promise<IGasStation | null> => {

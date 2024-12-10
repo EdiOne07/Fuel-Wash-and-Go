@@ -4,8 +4,24 @@ import { AuthenticatedRequest } from '../middleware/authMiddleware';
 
 export const getStations = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    console.log(req);
-    const stations = await stationService.getStations({});
+    const {
+      latitude,
+      longitude,
+      radius,
+      status,
+      maxPrice,
+      minRating,
+    } = req.query;
+
+    const stations = await stationService.getStations({
+      latitude: latitude ? parseFloat(latitude as string) : undefined,
+      longitude: longitude ? parseFloat(longitude as string) : undefined,
+      radius: radius ? parseInt(radius as string, 10) : undefined,
+      status: status as string,
+      maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
+      minRating: minRating ? parseFloat(minRating as string) : undefined,
+    });
+
     res.status(200).json(stations);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
