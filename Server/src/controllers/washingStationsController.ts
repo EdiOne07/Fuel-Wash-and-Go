@@ -1,7 +1,8 @@
+import { AuthenticatedRequest } from '../middleware/authMiddleware';
 import { Request, Response } from 'express';
 import * as washingStationService from '../services/washingStationService';
 
-export const getWashingStations = async (req: Request, res: Response): Promise<void> => {
+export const getWashingStations = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const washingStations = await washingStationService.getWashingStations();
     res.status(200).json(washingStations);
@@ -11,7 +12,7 @@ export const getWashingStations = async (req: Request, res: Response): Promise<v
   }
 };
 
-export const getWashingStationById = async (req: Request, res: Response): Promise<void> => {
+export const getWashingStationById = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { id } = req.params;
 
   try {
@@ -27,7 +28,13 @@ export const getWashingStationById = async (req: Request, res: Response): Promis
   }
 };
 
-export const createWashingStation = async (req: Request, res: Response): Promise<void> => {
+export const createWashingStation = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const { user } = req;
+  if (user?.role !== 'admin') {
+    res.status(403).json({ error: 'Forbidden: Only admins can create washing stations' });
+    return;
+  }
+
   const data = req.body;
 
   try {
@@ -39,7 +46,13 @@ export const createWashingStation = async (req: Request, res: Response): Promise
   }
 };
 
-export const updateWashingStation = async (req: Request, res: Response): Promise<void> => {
+export const updateWashingStation = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const { user } = req;
+  if (user?.role !== 'admin') {
+    res.status(403).json({ error: 'Forbidden: Only admins can update washing stations' });
+    return;
+  }
+
   const { id } = req.params;
   const updateData = req.body;
 
@@ -56,7 +69,13 @@ export const updateWashingStation = async (req: Request, res: Response): Promise
   }
 };
 
-export const deleteWashingStation = async (req: Request, res: Response): Promise<void> => {
+export const deleteWashingStation = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  const { user } = req;
+  if (user?.role !== 'admin') {
+    res.status(403).json({ error: 'Forbidden: Only admins can delete washing stations' });
+    return;
+  }
+
   const { id } = req.params;
 
   try {
