@@ -1,19 +1,19 @@
 import { Request, Response } from 'express';
-import * as googleMapsService from '../services/googleMapsService';
+import { findNearbyPlaces } from '../services/googleMapsService';
 
-export const getNearbyGasStations = async (req: Request, res: Response): Promise<void> => {
-  const { latitude, longitude, radius, keyword } = req.query;
+export const getNearbyStations = async (req: Request, res: Response): Promise<void> => {
+  const { latitude, longitude, radius = 1000, keyword = 'gas station' } = req.query;
 
   if (!latitude || !longitude) {
-    res.status(400).json({ error: 'Latitude and longitude are required' });
+    res.status(400).json({ error: 'Latitude and Longitude are required' });
     return;
   }
 
   try {
-    const stations = await googleMapsService.findNearbyGasStations(
+    const stations = await findNearbyPlaces(
       parseFloat(latitude as string),
       parseFloat(longitude as string),
-      radius ? parseInt(radius as string, 10) : undefined,
+      parseInt(radius as string, 10),
       keyword as string
     );
 

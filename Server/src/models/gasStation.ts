@@ -10,9 +10,10 @@ export interface IGasStation extends Document {
   name: string;
   location: {
     type: 'Point';
-    coordinates: [number, number]; // [longitude, latitude]
+    coordinates: [number, number];
   };
-  gasPrice: number;
+  gasPrice?: number; // Optional field for real-time gas prices
+  lastUpdated?: Date; // Timestamp of the last gas price update
   status: Status;
   washingStationId?: mongoose.Types.ObjectId;
   rating: number;
@@ -31,7 +32,8 @@ const GasStationSchema = new Schema<IGasStation>({
       required: true,
     },
   },
-  gasPrice: { type: Number, required: true },
+  gasPrice: { type: Number },
+  lastUpdated: { type: Date },
   status: {
     type: String,
     enum: Object.values(Status),
@@ -41,10 +43,6 @@ const GasStationSchema = new Schema<IGasStation>({
   rating: { type: Number, default: 0 },
 });
 
-// text index for the `name` field
-GasStationSchema.index({ name: 'text' });
-
-// 2dsphere index for geospatial queries
 GasStationSchema.index({ location: '2dsphere' });
 
 export default mongoose.model<IGasStation>('GasStation', GasStationSchema);
