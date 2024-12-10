@@ -41,6 +41,10 @@ const GasStationSchema = new Schema<IGasStation>({
   rating: { type: Number, default: 0 },
 });
 
+// text index for the `name` field
+GasStationSchema.index({ name: 'text' });
+
+// 2dsphere index for geospatial queries
 GasStationSchema.index({ location: '2dsphere' });
 
 export default mongoose.model<IGasStation>('GasStation', GasStationSchema);

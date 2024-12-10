@@ -7,18 +7,14 @@ export const getStations = async (filters: {
   status?: string;
   maxPrice?: number;
   minRating?: number;
+  searchTerm?: string;
 }): Promise<IGasStation[]> => {
   const query: any = {};
 
-  if (filters.status) {
-    query.status = filters.status;
-  }
-  if (filters.maxPrice !== undefined) {
-    query.gasPrice = { $lte: filters.maxPrice };
-  }
-  if (filters.minRating !== undefined) {
-    query.rating = { $gte: filters.minRating };
-  }
+  if (filters.status) query.status = filters.status;
+  if (filters.maxPrice !== undefined) query.gasPrice = { $lte: filters.maxPrice };
+  if (filters.minRating !== undefined) query.rating = { $gte: filters.minRating };
+  if (filters.searchTerm) query.$text = { $search: filters.searchTerm };
 
   const aggregationPipeline: any[] = [];
 

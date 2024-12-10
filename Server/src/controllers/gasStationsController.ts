@@ -11,6 +11,7 @@ export const getStations = async (req: AuthenticatedRequest, res: Response): Pro
       status,
       maxPrice,
       minRating,
+      searchTerm,
     } = req.query;
 
     const stations = await stationService.getStations({
@@ -20,6 +21,7 @@ export const getStations = async (req: AuthenticatedRequest, res: Response): Pro
       status: status as string,
       maxPrice: maxPrice ? parseFloat(maxPrice as string) : undefined,
       minRating: minRating ? parseFloat(minRating as string) : undefined,
+      searchTerm: searchTerm as string,
     });
 
     res.status(200).json(stations);
@@ -28,7 +30,6 @@ export const getStations = async (req: AuthenticatedRequest, res: Response): Pro
     res.status(500).json({ error: 'Internal Server Error', details: errorMessage });
   }
 };
-
 
 export const getStationById = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   const { id } = req.params;
