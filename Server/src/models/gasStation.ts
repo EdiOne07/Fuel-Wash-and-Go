@@ -1,6 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-// Enum-like object for Gas Station status
 export enum Status {
   Empty = 'Empty',
   AverageBusy = 'AverageBusy',
@@ -9,7 +8,7 @@ export enum Status {
 
 export interface IGasStation extends Document {
   name: string;
-  locationId: mongoose.Types.ObjectId; // Reference to the Location model
+  locationId: mongoose.Types.ObjectId; // Reference to Location model
   gasPrice: number;
   status: Status;
   washingStationId?: mongoose.Types.ObjectId; // Optional reference to WashingStation
