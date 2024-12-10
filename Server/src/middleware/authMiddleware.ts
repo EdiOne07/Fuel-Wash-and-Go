@@ -7,6 +7,7 @@ export interface AuthenticatedRequest extends Request {
 
 export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const sessionId = req.headers.sessionid as string;
+  console.log(sessionId);
 
   if (!sessionId) {
     res.status(401).json({ error: 'Unauthorized: Missing session ID' });
@@ -15,19 +16,17 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
 
   try {
     const user = await User.findOne({ sessionId });
+
     if (!user) {
       res.status(401).json({ error: 'Unauthorized: Invalid session ID' });
       return;
     }
 
-
     (req as AuthenticatedRequest).user = user;
     next();
   } catch (error) {
-    res.status(500).json({
-      error: 'Internal Server Error',
-      details: (error as Error).message,
-    });
+    console.error('Authentication Error:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: (error as Error).message });
   }
 };
 
