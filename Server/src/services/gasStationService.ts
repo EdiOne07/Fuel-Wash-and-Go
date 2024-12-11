@@ -5,7 +5,7 @@ import { fetchGasPrices } from './gasPriceService';
 export const getStations = async (filters: {
   latitude?: number;
   longitude?: number;
-  radius?: number; // in meters
+  radius?: number;
   status?: string;
   maxPrice?: number;
   minRating?: number;
@@ -20,7 +20,7 @@ export const getStations = async (filters: {
 
   const aggregationPipeline: any[] = [];
 
-  if (filters.latitude !== undefined && filters.longitude !== undefined && filters.radius !== undefined) {
+  if (filters.latitude && filters.longitude && filters.radius) {
     aggregationPipeline.push({
       $geoNear: {
         near: { type: 'Point', coordinates: [filters.longitude, filters.latitude] },
@@ -35,24 +35,6 @@ export const getStations = async (filters: {
 
   const dbStations = await GasStation.aggregate(aggregationPipeline);
 
-  // Enrich database stations with gas prices
-  for (const station of dbStations) {
-    const gasPrice = await fetchGasPrices({
-      latitude: station.location.coordinates[1],
-      longitude: station.location.coordinates[0],
-    });
-
-    if (gasPrice) {
-      station.gasPrice = gasPrice;
-      station.lastUpdated = new Date();
-      await GasStation.findByIdAndUpdate(station._id, {
-        gasPrice,
-        lastUpdated: new Date(),
-      });
-    }
-  }
-
-  // If no database results or if Google API is needed, fetch nearby places
   if (filters.latitude && filters.longitude && filters.radius) {
     const apiStations = await findNearbyPlaces(
       filters.latitude,
@@ -61,7 +43,6 @@ export const getStations = async (filters: {
       filters.searchTerm || 'gas station'
     );
 
-    // Merge Google API results with DB results, avoiding duplicates
     const uniqueStations = apiStations.filter(
       apiStation => !dbStations.some(dbStation => dbStation.name === apiStation.name)
     );
@@ -71,6 +52,18 @@ export const getStations = async (filters: {
 
   return dbStations;
 };
+
+
+
+export const updateGasPriceForStation = async (stationId: string, gasPrice: number): Promise<void> => {
+  const station = await GasStation.findById(stationId);
+  if (station) {
+    station.gasPrice = gasPrice;
+    station.lastUpdated = new Date();
+    await station.save();
+  }
+};
+
 
 export const getStationById = async (id: string): Promise<IGasStation | null> => {
   return GasStation.findById(id);

@@ -14,7 +14,7 @@ export interface IGasStation extends Document {
   };
   gasPrice?: number; // Optional field for real-time gas prices
   lastUpdated?: Date; // Timestamp of the last gas price update
-  status: Status;
+  status: Status; // Directly using the enum
   washingStationId?: mongoose.Types.ObjectId;
   rating: number;
 }
@@ -36,7 +36,7 @@ const GasStationSchema = new Schema<IGasStation>({
   lastUpdated: { type: Date },
   status: {
     type: String,
-    enum: Object.values(Status),
+    enum: Object.values(Status), // Aligning enum values with the schema
     default: Status.Empty,
   },
   washingStationId: { type: mongoose.Schema.Types.ObjectId, ref: 'WashingStation' },

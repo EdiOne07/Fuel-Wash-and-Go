@@ -19,10 +19,10 @@ export const fetchGasPrices = async (location: Location): Promise<number | null>
 
     const prices = response.data.prices;
     if (prices && prices.length > 0) {
-      return prices[0].price; // Return the first available price
+      return prices[0].price;
     }
 
-    return null; // No price available
+    return null;
   } catch (error) {
     console.error('Error fetching gas prices:', error);
     return null;
