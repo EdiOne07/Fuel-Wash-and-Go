@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import GasStation from '../models/gasStation';
-import { fetchGasPrices } from './gasPriceService';
+import { fetchGasPrices } from '../services/gasPriceService';
 
 export const scheduleGasPriceUpdates = () => {
   cron.schedule('0 * * * *', async () => { // Every hour
