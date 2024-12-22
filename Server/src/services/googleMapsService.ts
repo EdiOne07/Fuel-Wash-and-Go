@@ -1,6 +1,4 @@
 import { Client, LatLngLiteral } from '@googlemaps/google-maps-services-js';
-import axios from 'axios';
-
 
 const client = new Client({});
 
@@ -9,7 +7,6 @@ export interface PlaceResult {
   location: LatLngLiteral;
   rating: number;
   address: string;
-
 }
 
 export const findNearbyPlaces = async (
@@ -29,18 +26,18 @@ export const findNearbyPlaces = async (
     });
 
     return response.data.results
-      .filter(place => place.geometry?.location && place.name) // Ensure required fields exist
-      .map(place => ({
+      .filter((place) => place.geometry?.location && place.name) // Ensure required fields exist
+      .map((place) => ({
         name: place.name || 'Unknown Name', // Default name if undefined
         location: place.geometry!.location, // Guaranteed by the filter above
         rating: place.rating || 0, // Default rating if undefined
         address: place.vicinity || 'Unknown Address', // Default address if undefined
       }));
   } catch (error) {
+    console.error('Error fetching nearby places:', error);
     throw new Error(`Google Maps API Error: ${(error as Error).message}`);
   }
 };
-
 
 export interface TrafficStatusResult {
   origin: LatLngLiteral;
@@ -50,10 +47,10 @@ export interface TrafficStatusResult {
   durationInTraffic: number; // Duration considering traffic
 }
 
-export const getTrafficStatus = async (Latitude: number, Longitude: number) => {
+export const getTrafficStatus = async (latitude: number, longitude: number): Promise<TrafficStatusResult> => {
   try {
-    const origin = `${Latitude},${Longitude}`;
-    const destination = `${Latitude + 0.01},${Longitude + 0.01}`; // Small offset for testing
+    const origin = `${latitude},${longitude}`;
+    const destination = `${latitude + 0.01},${longitude + 0.01}`; // Small offset for testing
 
     const response = await client.directions({
       params: {
@@ -66,30 +63,40 @@ export const getTrafficStatus = async (Latitude: number, Longitude: number) => {
 
     const route = response.data.routes[0];
 
-    const trafficDelay = route?.legs[0]?.duration_in_traffic?.value ?? 0; // Use fallback value 0
-    const normalTime = route?.legs[0]?.duration?.value ?? 0;
-    
-    if (!trafficDelay || !normalTime) {
+    if (!route || !route.legs || route.legs.length === 0) {
       console.warn('Traffic data unavailable. Returning fallback status.');
-      return 'Smooth'; // Default status when no traffic data is available
+      return {
+        origin: { lat: latitude, lng: longitude },
+        destination: { lat: latitude + 0.01, lng: longitude + 0.01 },
+        trafficStatus: 'Smooth',
+        duration: 0,
+        durationInTraffic: 0,
+      };
     }
-    
-    // Calculate traffic status
-    let trafficStatus = "Normal";
 
-    if (trafficDelay > normalTime * 1.5) {
-      trafficStatus = "Busy";
-    } else if (trafficDelay > normalTime * 1.2) {
-      trafficStatus = "AverageBusy";
+    const normalTime = route.legs[0].duration?.value || 0; // Seconds
+    const trafficTime = route.legs[0].duration_in_traffic?.value || 0; // Seconds
+
+    // Calculate traffic status
+    let trafficStatus = 'Smooth';
+
+    if (trafficTime > normalTime * 1.5) {
+      trafficStatus = 'Heavy';
+    } else if (trafficTime > normalTime * 1.2) {
+      trafficStatus = 'Moderate';
     } else {
-      trafficStatus = "Light";
+      trafficStatus = 'Light';
     }
-    
-    return { trafficStatus };
-    
+
+    return {
+      origin: { lat: latitude, lng: longitude },
+      destination: { lat: latitude + 0.01, lng: longitude + 0.01 },
+      trafficStatus,
+      duration: normalTime,
+      durationInTraffic: trafficTime,
+    };
   } catch (error) {
+    console.error('Error fetching traffic status:', error);
     throw new Error(`Traffic Status Error: ${(error as Error).message}`);
   }
 };
-
-
