@@ -14,22 +14,11 @@ const LogInScreen: React.FC = () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       Alert.alert('Success', 'Login successful!');
-      navigation.navigate('Dashboard');
+      navigation.navigate('Home');
     } catch (error) {
       Alert.alert('Error', (error as Error).message);
     }
   };
-
-  const handleGoogleLogin = async () => {
-    try {
-      await signInWithPopup(auth, googleProvider);
-      Alert.alert('Success', 'Google login successful!');
-      navigation.navigate('Dashboard');
-    } catch (error) {
-      Alert.alert('Error', (error as Error).message);
-    }
-  };
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Log In</Text>
@@ -52,7 +41,6 @@ const LogInScreen: React.FC = () => {
       />
 
       <Button title="Log In" onPress={handleLogin} />
-      <Button title="Continue with Google" onPress={handleGoogleLogin} />
 
       <TouchableOpacity style={styles.link} onPress={() => navigation.navigate('SignUp')}>
         <Text style={styles.linkText}>Don't have an account? Register here</Text>
