@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
 import CustomInput from '../components/CustomInput/CustomInput';
-import { registerUser } from '../utils/api';
+
 import { validateRegistrationInputs } from '../utils/validation';
 
 const SignUpScreen = () => {
@@ -63,3 +63,7 @@ const styles = StyleSheet.create({
 });
 
 export default SignUpScreen;
+function registerUser(email: string, username: string, location: string, password: string) {
+  throw new Error('Function not implemented.');
+}
+
