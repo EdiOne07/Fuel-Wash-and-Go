@@ -53,7 +53,7 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
         }
     
         const response = await fetch(
-          `${apiUrl}/maps/nearby-gas-stations?latitude=${location!.latitude}&longitude=${location!.longitude}&radius=1000`,
+          `${apiUrl}/maps/nearby-gas-stations?latitude=${location!.latitude}&longitude=${location!.longitude}&radius=10000`,
           {
             method: "GET",
             headers: {
