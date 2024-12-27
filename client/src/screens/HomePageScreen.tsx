@@ -4,9 +4,6 @@ import * as Location from "expo-location";
 import { View, StyleSheet, Dimensions, ActivityIndicator, Alert, Text } from "react-native";
 import { apiUrl } from "../utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-//import navigation from "../navigation/navigation";
-
-
 
 interface GasStation {
   name: string;
@@ -91,7 +88,7 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
     };
 
     fetchGasStations();
-  }, [location]);
+  }, [location, navigation]);
 
   if (errorMsg) {
     return (

@@ -13,12 +13,14 @@ const SignUpScreen = ({ navigation }: { navigation: any }) => {
 
   const handleRegister = async () => {
     setError("");
+
     if (!validateRegistrationInputs(email, name, password)) {
       setError("Please ensure all fields are valid.");
       return;
     }
 
     setLoading(true);
+
     try {
       const response = await fetch(`${apiUrl}/users/register`, {
         method: "POST",
@@ -28,23 +30,31 @@ const SignUpScreen = ({ navigation }: { navigation: any }) => {
         body: JSON.stringify({
           name,
           email,
-          password
+          password,
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        if (response.status === 400) {
-          throw new Error("Invalid input. Please check your details.");
-        } else {
-          throw new Error("Failed to register user. Please try again later."+""+response.status);
-        }
+        throw new Error(data.error || "Registration failed. Try again.");
       }
 
-      const data = await response.json();
       Alert.alert("Success", "Registration successful!");
-      navigation.navigate("Login"); 
+      navigation.navigate("Login");
     } catch (err: any) {
-      setError(err.message || "Failed to register user");
+      // Show the specific error from the backend
+      if (err.message.includes("Invalid email format")) {
+        setError("Invalid email format. Example: user@example.com");
+      } else if (err.message.includes("Name should contain only letters and spaces")) {
+        setError("Name must only contain letters and spaces.");
+      } else if (err.message.includes("Password must include")) {
+        setError("Password must be at least 5 characters, include an uppercase letter, and a number.");
+      } else if (err.message.includes("Email is already registered")) {
+        setError("This email is already registered. Try logging in.");
+      } else {
+        setError(err.message || "An unexpected error occurred.");
+      }
     } finally {
       setLoading(false);
     }
@@ -54,7 +64,7 @@ const SignUpScreen = ({ navigation }: { navigation: any }) => {
     <View style={styles.container}>
       <Text style={styles.title}>Register</Text>
       <CustomInput value={email} onChange={setEmail} placeholder="Email" />
-      <CustomInput value={name} onChange={setName} placeholder="Username" />
+      <CustomInput value={name} onChange={setName} placeholder="Name" />
       <CustomInput value={password} onChange={setPassword} placeholder="Password" secureTextEntry />
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <Button title={loading ? "Registering..." : "Register"} onPress={handleRegister} disabled={loading} />
