@@ -4,6 +4,8 @@ import * as Location from "expo-location";
 import { View, StyleSheet, Dimensions, ActivityIndicator, Alert, Text,Button } from "react-native";
 import { apiUrl } from "../utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRadius } from "../components/RadiusContext";
+
 
 interface GasStation {
   name: string;
@@ -16,6 +18,7 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
   const [gasStations, setGasStations] = useState<GasStation[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const { radius } = useRadius();
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -63,7 +66,7 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
         }
     
         const response = await fetch(
-          `${apiUrl}/maps/nearby-gas-stations?latitude=${location!.latitude}&longitude=${location!.longitude}&radius=10000`,
+          `${apiUrl}/maps/nearby-gas-stations?latitude=${location!.latitude}&longitude=${location!.longitude}&radius=${radius*1000}`,
           {
             method: "GET",
             headers: {
@@ -101,7 +104,7 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
     };
 
     fetchGasStations();
-  }, [location, navigation]);
+  }, [location, navigation,radius]);
 
   if (errorMsg) {
     return (

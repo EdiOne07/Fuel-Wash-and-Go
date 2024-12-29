@@ -3,11 +3,12 @@ import { View, Text, StyleSheet, ActivityIndicator, Alert, Button } from "react-
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { apiUrl } from "../utils";
 import Slider from "@react-native-community/slider";
+import { useRadius } from "../components/RadiusContext";
 
 const ProfileScreen = ({ navigation }: { navigation: any }) =>{
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [radius, setRadius] = useState(10); // Default radius in km
+  const {radius, setRadius} = useRadius(); // Default radius in km
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -43,9 +44,8 @@ const ProfileScreen = ({ navigation }: { navigation: any }) =>{
     fetchProfile();
   }, []);
   const handleRadiusChange = (value: number) => {
-    setRadius(value);
+    setRadius(value); 
   };
-  
 
   if (loading) {
     return (
