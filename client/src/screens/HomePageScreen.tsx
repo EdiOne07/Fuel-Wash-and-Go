@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
-import { View, StyleSheet, Dimensions, ActivityIndicator, Alert, Text } from "react-native";
+import { View, StyleSheet, Dimensions, ActivityIndicator, Alert, Text,Button } from "react-native";
 import { apiUrl } from "../utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -16,6 +16,19 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
   const [gasStations, setGasStations] = useState<GasStation[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <View style={{ marginRight: 20 }}>
+        <Button
+          title="Profile"
+          onPress={() => navigation.navigate("Profile")}
+          color="#000" // Adjust color to match your theme
+        />
+        </View>
+      ),
+    });
+  }, [navigation]);
 
   // Fetch user's current location
   useEffect(() => {
@@ -136,6 +149,10 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
             />
           ))}
       </MapView>
+      <Button
+            title="Go to Profile"
+            onPress={() => navigation.navigate("Profile")}
+          />
     </View>
   );
 };
