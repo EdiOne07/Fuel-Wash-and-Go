@@ -46,6 +46,53 @@ const ProfileScreen = ({ navigation }: { navigation: any }) =>{
   const handleRadiusChange = (value: number) => {
     setRadius(value); 
   };
+  const handleLogout = async () => {
+    Alert.alert(
+      "Logout Confirmation",
+      "Are you sure you want to logout?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Yes",
+          onPress: async () => {
+            try {
+              const sessionId = await AsyncStorage.getItem("sessionId");
+              if (!sessionId) {
+                Alert.alert("Error", "Session ID not found. Please log in again.");
+                navigation.replace("Login");
+                return;
+              }
+
+              const response = await fetch(`${apiUrl}/users/logout`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  sessionid: sessionId,
+                },
+              });
+
+              if (!response.ok) {
+                throw new Error(`HTTP Error! Status: ${response.status}`);
+              }
+
+              // Clear session ID from storage
+              await AsyncStorage.removeItem("sessionId");
+
+              // Navigate to Login screen
+              navigation.replace("Login");
+            } catch (error) {
+              console.error("Error during logout:", error);
+              Alert.alert("Error", "Failed to logout. Please try again later.");
+            }
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
 
   if (loading) {
     return (
@@ -105,6 +152,7 @@ const ProfileScreen = ({ navigation }: { navigation: any }) =>{
         <Button
           title="Logout"
           color="#FF0000"
+          onPress={handleLogout}
         />  
       </View>
     </View>
