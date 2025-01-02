@@ -12,6 +12,11 @@ interface GasStation {
   location: { lat: number; lng: number };
   address: string;
 }
+interface washingStation{
+  name:string;
+  location: { lat: number; lng: number };
+  address: string;
+}
 
 const HomePageScreen = ({ navigation }: { navigation: any }) => {
   const [location, setLocation] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -19,6 +24,7 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const { radius } = useRadius();
+  const[washingStations,setWashingStations]=useState<washingStation[]>([]);
   useEffect(() => {
     navigation.setOptions({
       headerRight: () => (
@@ -75,6 +81,7 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
             },
           }
         );
+        
     
         if (response.status === 401) {
           Alert.alert("Unauthorized", "Your session has expired. Please log in again.");
@@ -104,6 +111,60 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
     };
 
     fetchGasStations();
+  }, [location, navigation,radius]);
+
+  useEffect(() => {
+    if (!location) return;
+
+    const fetchWashingStations = async () => {
+      setLoading(true);
+      try {
+        const sessionId = await AsyncStorage.getItem("sessionId"); // Retrieve session ID
+    
+        if (!sessionId) {
+          throw new Error("Session ID not found. Please log in again.");
+        }
+    
+        const response = await fetch(
+          `${apiUrl}/maps/nearby-washing-stations?latitude=${location!.latitude}&longitude=${location!.longitude}&radius=${radius*1000}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              sessionid: sessionId, 
+            },
+          }
+        );
+        
+    
+        if (response.status === 401) {
+          Alert.alert("Unauthorized", "Your session has expired. Please log in again.");
+          navigation.navigate("LogIn");
+          return;
+        }
+
+        
+        if (!response.ok) {
+          throw new Error(`HTTP Error! Status: ${response.status}`);
+        }
+    
+        const data = await response.json();
+    
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid response format: Expected an array");
+        }
+    
+        setWashingStations(data);
+      } catch (error) {
+        console.error("Error fetching washing stations:", error);
+        Alert.alert("Error", "Failed to fetch washing stations. Please try again later.");
+        setWashingStations([]); // Avoid issues with map()
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWashingStations();
   }, [location, navigation,radius]);
 
   if (errorMsg) {
@@ -137,7 +198,7 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
         <Marker
           coordinate={{ latitude: location!.latitude, longitude: location!.longitude }}
           title="You are here"
-          pinColor="blue"
+          pinColor="green"
         />
 
         {/* Gas Station Markers */}
@@ -149,6 +210,16 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
               title={station.name}
               description={station.address}
               pinColor="red"
+            />
+          ))}
+          {Array.isArray(washingStations) &&
+          washingStations.map((station, index) => (
+            <Marker
+              key={index}
+              coordinate={{ latitude: station.location.lat, longitude: station.location.lng }}
+              title={station.name}
+              description={station.address}
+              pinColor="blue"
             />
           ))}
       </MapView>
