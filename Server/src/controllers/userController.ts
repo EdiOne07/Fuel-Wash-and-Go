@@ -121,3 +121,37 @@ export const logoutUser = async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({ error: 'Internal Server Error', details: (error as Error).message });
   }
 };
+
+export const updateLocation = async (req: Request, res: Response): Promise<void> => {
+  const { sessionid } = req.headers;
+  const { latitude, longitude } = req.body;
+
+  if (!sessionid || typeof sessionid !== 'string') {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  if (!latitude || !longitude) {
+    res.status(400).json({ error: 'Latitude and Longitude are required' });
+    return;
+  }
+
+  try {
+    const updatedUser = await userService.updateUserProfile(sessionid, {
+      location: {
+        type: 'Point',
+        coordinates: [longitude, latitude],
+      },
+    });
+
+    if (!updatedUser) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error('Update Location Error:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: (error as Error).message });
+  }
+};

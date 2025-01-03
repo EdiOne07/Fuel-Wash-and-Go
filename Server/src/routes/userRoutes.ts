@@ -6,6 +6,7 @@ const router = Router();
 
 router.post('/register', userController.registerUser);
 router.post('/login', userController.loginUser);
+router.put('/update-location', authenticate, userController.updateLocation);
 router.get('/profile', authenticate, userController.getUserProfile);
 router.put('/profile', authenticate, userController.updateUserProfile);
 router.delete('/profile', authenticate, userController.deleteUserProfile);
