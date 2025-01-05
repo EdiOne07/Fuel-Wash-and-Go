@@ -7,11 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "concurrently \"npm run server\" \"npm run client\"",
     "server": "ts-node-dev server/src/index.ts",
-    "client": "npm start --prefix client", 
+    "client": "npm start --prefix client",
     "clean": "rmdir /s /q node_modules",
     "prisma:migrate": "node prisma-load-env.js && npx prisma migrate dev"
-
-
   },
   "keywords": [],
   "author": "",
@@ -29,6 +27,12 @@
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",
-    "express": "^4.21.1"
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "firebase": "^11.0.2",
+    "firebase-admin": "^13.0.0",
+    "md5": "^2.3.0",
+    "mongoose": "^8.8.4"
   }
 }

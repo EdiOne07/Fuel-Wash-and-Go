@@ -1,4 +1,21 @@
 {
+<<<<<<< HEAD
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "client",
+    "server",
+    "prisma/DatabaseTest.ts"
+  ],
+  "extends": "expo/tsconfig.base"
+}
+=======
     "compilerOptions": {
       "target": "es6",
       "module": "commonjs",
@@ -12,3 +29,4 @@
       "server"
 , "prisma/DatabaseTest.ts", "prisma"    ]
   }
+>>>>>>> 859b7134f2a191fe1ecd4cca94c2746a9e20245b
