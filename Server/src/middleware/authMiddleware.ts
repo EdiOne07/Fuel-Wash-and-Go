@@ -5,6 +5,8 @@ export interface AuthenticatedRequest extends Request {
   user?: IUser;
 }
 
+
+
 export const authenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const sessionId = req.headers.sessionid as string;
   console.log(sessionId);
