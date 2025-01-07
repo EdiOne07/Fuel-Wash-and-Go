@@ -5,7 +5,8 @@ import { authenticate } from '../middleware/authMiddleware';
 const router = Router();
 
 router.get('/nearby-gas-stations', authenticate, googleMapsController.getNearbyStations);
-router.get('/traffic-status',authenticate,googleMapsController.getTrafficStatusForLocation);
-router.get('/nearby-washing-stations',authenticate,googleMapsController.getNearbyWashingStations);
+router.get('/traffic-status', authenticate,googleMapsController.getTrafficStatusForLocation);
+router.get('/nearby-washing-stations', authenticate,googleMapsController.getNearbyWashingStations);
+router.get("/get-route", authenticate, googleMapsController.getRoute);
 
 export default router;
