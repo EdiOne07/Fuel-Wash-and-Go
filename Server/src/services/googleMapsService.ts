@@ -1,4 +1,4 @@
-import { Client, LatLngLiteral } from '@googlemaps/google-maps-services-js';
+import { Client, LatLngLiteral,PlaceDetailsRequest } from '@googlemaps/google-maps-services-js';
 
 const client = new Client({});
 
@@ -46,6 +46,27 @@ export interface TrafficStatusResult {
   duration: number; // Normal duration
   durationInTraffic: number; // Duration considering traffic
 }
+
+/**
+ * Fetch place details using Google Maps API
+ */
+export const findStationById = async (stationId: string): Promise<any> => {
+  try {
+    const response = await client.placeDetails({
+      params: {
+        place_id: stationId,
+        key: process.env.GOOGLE_MAPS_API_KEY!, // Your Google Maps API key
+      },
+      timeout: 10000, // 10 seconds timeout
+    });
+
+    // Return the station details from the response
+    return response.data.result;
+  } catch (error) {
+    console.error("Error fetching station details:", error);
+    throw new Error('Failed to fetch station details from Google.');
+  }
+};
 
 export const getTrafficStatus = async (latitude: number, longitude: number): Promise<TrafficStatusResult> => {
   try {

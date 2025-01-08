@@ -5,6 +5,7 @@ import { View, StyleSheet, Dimensions, ActivityIndicator, Alert, Text, Button, M
 import { apiUrl } from "../utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRadius } from "../components/RadiusContext";
+import ProfileScreen from "./ProfileScreen";
 
 interface GasStation {
   name: string;
@@ -145,10 +146,18 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
     fetchWashingStations();
   }, [location, radius]);
 
-  const handleInfoPress = (station: any) => {
-    setSelectedStation(station);
-    setModalVisible(true);
+  const handleInfoPress = (station: GasStation | WashingStation) => {
+    // Logic to determine the station type based on available properties
+    const stationType = station.address.includes("Gas") ? "gas" : "washing"; // Example logic
+  
+    // Navigate to StationDetails and pass the required parameters
+    navigation.navigate("StationDetails", {
+      stationId: station.name,  // Replace with a unique identifier like station.id if available
+      stationType: stationType, // "gas" or "washing"
+    });
   };
+  
+  
 
   if (errorMsg) {
     return (
