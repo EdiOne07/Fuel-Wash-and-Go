@@ -1,4 +1,4 @@
-import { Client, LatLngLiteral } from '@googlemaps/google-maps-services-js';
+import { Client, LatLngLiteral,PlaceDetailsRequest } from '@googlemaps/google-maps-services-js';
 
 const client = new Client({});
 
@@ -39,6 +39,46 @@ export const findNearbyPlaces = async (
   }
 };
 
+export const findNearbyPlacesDetailed = async ({
+  latitude,
+  longitude,
+  radius = 1000,
+  keyword = 'gas station',
+}: {
+  latitude: number;
+  longitude: number;
+  radius?: number;
+  keyword?: string;
+}): Promise<any[]> => {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey) {
+    throw new Error('Google Maps API key is not configured.');
+  }
+
+  const response = await client.placesNearby({
+    params: {
+      location: { lat: latitude, lng: longitude },
+      radius,
+      keyword,
+      key: apiKey,
+    },
+    timeout: 10000, // 10 seconds timeout
+  });
+
+  // Map the location from geometry.location
+  const results = response.data.results.map((result) => ({
+    name: result.name || 'Unknown',
+    location: result.geometry?.location || null, // Extract the correct geometry.location
+    address: result.vicinity || 'No address available',
+    rating: result.rating || 0,
+    business_status: result.business_status || 'UNKNOWN',
+    place_id: result.place_id || '',
+  }));
+
+  console.log('Mapped gas stations:', results); // Debugging log
+  return results;
+};
+
 export interface TrafficStatusResult {
   origin: LatLngLiteral;
   destination: LatLngLiteral;
@@ -47,6 +87,35 @@ export interface TrafficStatusResult {
   durationInTraffic: number; // Duration considering traffic
 }
 
+/**
+ * Fetch place details using Google Maps API
+ */
+export const getPlaceDetails = async (placeId: string): Promise<any> => {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('Google Maps API key is not configured.');
+  }
+
+  console.log('Fetching place details for place_id:', placeId);
+
+  try {
+    const response = await client.placeDetails({
+      params: {
+        place_id: placeId,
+        key: apiKey,
+      },
+      timeout: 10000, // 10 seconds timeout
+    });
+
+    console.log('Google Maps API response:', response.data.result);
+
+    return response.data.result;
+  } catch (error: any) {
+    console.error('Error from Google Maps API:', error.response?.data || error.message);
+    throw new Error(error.response?.data?.error_message || 'Failed to fetch place details');
+  }
+};
 export const getTrafficStatus = async (latitude: number, longitude: number): Promise<TrafficStatusResult> => {
   try {
     const origin = `${latitude},${longitude}`;

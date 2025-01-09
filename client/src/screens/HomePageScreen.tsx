@@ -12,6 +12,7 @@ interface GasStation {
   address: string;
   price: string;
   status: string;
+  place_id: string;
 }
 
 interface WashingStation {
@@ -19,6 +20,7 @@ interface WashingStation {
   location: { lat: number; lng: number };
   address: string;
   status: string;
+  place_id: string;
 }
 
 const HomePageScreen = ({ navigation }: { navigation: any }) => {
@@ -28,7 +30,7 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const { radius } = useRadius();
-  const [selectedStation, setSelectedStation] = useState<any>(null); // State for selected station
+  const [selectedStation] = useState<any>(null); // State for selected station
   const [modalVisible, setModalVisible] = useState(false); // Modal visibility state
 
   // Set header button for navigation
@@ -77,6 +79,12 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
           throw new Error("Session ID not found. Please log in again.");
         }
 
+        // console.log("Fetching gas stations:", {
+        //   latitude: location.latitude,
+        //   longitude: location.longitude,
+        //   radius,
+        // });
+
         const response = await fetch(
           `${apiUrl}/maps/nearby-gas-stations?latitude=${location.latitude}&longitude=${location.longitude}&radius=${radius * 1000}`,
           {
@@ -93,6 +101,8 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
         }
 
         const data = await response.json();
+        console.log("Gas stations response:", data); // Log the response for debugging
+        
         setGasStations(data);
       } catch (error) {
         console.error("Error fetching gas stations:", error);
@@ -145,10 +155,26 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
     fetchWashingStations();
   }, [location, radius]);
 
-  const handleInfoPress = (station: any) => {
-    setSelectedStation(station);
-    setModalVisible(true);
+  const handleInfoPress = (station: GasStation | WashingStation) => {
+    console.log("Selected station:", station); // Debug log
+    console.log("Station place_id:", station.place_id); // Verify place_id exists
+    
+    if (!station.place_id) {
+      Alert.alert("Error", "Station place_id is missing!");
+      return;
+    }
+
+    
+    const stationType = station.address.includes("Gas") ? "gas" : "washing";
+  
+    // Navigate to StationDetails and pass the required parameters
+    navigation.navigate("StationDetails", {
+      stationId: station.place_id,  // Replace with a unique identifier like station.id if available
+      stationType: stationType, // "gas" or "washing"
+    });
   };
+  
+  
 
   if (errorMsg) {
     return (
@@ -186,6 +212,7 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
 
         {/* Gas Station Markers */}
         {gasStations.map((station, index) => (
+           station.location && (
           <Marker
             key={index}
             coordinate={{ latitude: station.location.lat, longitude: station.location.lng }}
@@ -199,10 +226,12 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
               <Text style={styles.infoText}>Tap for more info</Text>
             </Callout>
           </Marker>
+           )
         ))}
 
         {/* Washing Station Markers */}
         {washingStations.map((station, index) => (
+           station.location && (
           <Marker
             key={index}
             coordinate={{ latitude: station.location.lat, longitude: station.location.lng }}
@@ -216,6 +245,7 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
               <Text style={styles.infoText}>Tap for more info</Text>
             </Callout>
           </Marker>
+           )
         ))}
       </MapView>
 

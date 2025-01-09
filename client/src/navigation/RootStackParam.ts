@@ -4,5 +4,10 @@ export type RootStackParamList = {
     SignUp: undefined;
     Dashboard: undefined;
     Home:undefined;
+    StationDetails: {
+      stationId: string;
+      stationType: "gas" | "washing";
+    };
+    Profile:undefined;
   };
   
