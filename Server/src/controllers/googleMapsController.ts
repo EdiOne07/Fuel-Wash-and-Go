@@ -1,30 +1,42 @@
 import { Request, Response } from 'express';
-import { findNearbyPlaces, getTrafficStatus } from '../services/googleMapsService';
+import { findNearbyPlaces, findNearbyPlacesDetailed, getTrafficStatus } from '../services/googleMapsService';
 import { LatLngLiteral } from '@googlemaps/google-maps-services-js';
-import { findStationById } from "../services/googleMapsService";
+import { getPlaceDetails } from "../services/googleMapsService";
 /**
  * Fetch nearby gas stations using Google Maps API
  */
-export const getNearbyStations = async (req: Request, res: Response): Promise<void> => {
-  const { latitude, longitude, radius = 1000, keyword = 'gas station' } = req.query;
+import { Client } from '@googlemaps/google-maps-services-js';
 
-  if (!latitude || !longitude) {
-    res.status(400).json({ error: 'Latitude and Longitude are required' });
+const client = new Client();
+export const getStationDetails = async (req: Request, res: Response): Promise<void> => {
+  const { place_id } = req.query;
+
+  if (!place_id) {
+    res.status(400).json({ error: 'place_id is required' });
     return;
   }
 
   try {
-    const stations = await findNearbyPlaces(
-      parseFloat(latitude as string),
-      parseFloat(longitude as string),
-      parseInt(radius as string, 10),
-      keyword as string
-    );
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    if (!apiKey) {
+      throw new Error('Google Maps API key is not configured.');
+    }
 
-    res.status(200).json(stations);
+    const response = await client.placeDetails({
+      params: {
+        place_id: place_id as string,
+        key: apiKey,
+      },
+      timeout: 10000, // 10 seconds timeout
+    });
+
+    res.status(200).json(response.data.result);
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-    res.status(500).json({ error: 'Internal Server Error', details: errorMessage });
+    console.error('Error fetching station details:', error);
+    res.status(500).json({
+      error: 'Failed to fetch station details',
+      details: error instanceof Error ? error.message : 'Unknown error',
+    });
   }
 };
 
@@ -85,27 +97,43 @@ export const getNearbyWashingStations = async (req: Request, res: Response): Pro
     res.status(500).json({ error: 'Internal Server Error', details: errorMessage });
   }
 };
-export const getGasStationById = async (req: Request, res: Response): Promise<void> => {
-  const stationId = req.params.id; // Retrieve the alphanumeric ID from the route parameter
+export const getNearbyStations = async (req: Request, res: Response): Promise<void> => {
+  const { latitude, longitude, radius = 1000, keyword = 'gas station' } = req.query;
 
-  console.log("Received Station ID:", stationId); // Debugging
-
-  if (!stationId || !/^[a-zA-Z0-9_-]+$/.test(stationId)) { // Alphanumeric plus dashes/underscores
-    res.status(400).json({ error: 'Invalid Station ID. Must be alphanumeric.' });
+  if (!latitude || !longitude) {
+    res.status(400).json({ error: 'Latitude and Longitude are required' });
     return;
   }
 
   try {
-    const station = await findStationById(stationId);
+    const stations = await findNearbyPlacesDetailed({
+      latitude: parseFloat(latitude as string),
+      longitude: parseFloat(longitude as string),
+      radius: parseInt(radius as string, 10),
+      keyword: keyword as string,
+    });
 
-    if (!station) {
-      res.status(404).json({ error: 'Station not found.' });
-      return;
-    }
-
-    res.status(200).json(station);
+    res.status(200).json(stations);
   } catch (error) {
-    console.error("Error fetching station details:", error);
-    res.status(500).json({ error: 'Internal Server Error'});
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    res.status(500).json({ error: 'Internal Server Error', details: errorMessage });
+  }
+};
+export const getGasStationById = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  console.log('Fetching details for place_id:', id);
+
+  if (!id) {
+    res.status(400).json({ error: 'Station ID is required.' });
+    return;
+  }
+
+  try {
+    const stationDetails = await getPlaceDetails(id);
+
+    res.status(200).json(stationDetails);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    res.status(500).json({ error: 'Failed to fetch station details', details: errorMessage });
   }
 };

@@ -28,7 +28,7 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
           throw new Error("Session ID not found. Please log in again.");
         }
   
-        const endpoint = `${apiUrl}/maps/gas-station/${stationId}`;
+        const endpoint = `${apiUrl}/maps/gas-station/place_id=${stationId}`;
         console.log("Fetching station details from:", endpoint);
   
         const response = await fetch(endpoint, {
