@@ -45,17 +45,12 @@ export const findNearbyPlacesDetailed = async ({
   radius = 1000,
   keyword = 'gas station',
 }: {
-  latitude?: number;
-  longitude?: number;
+  latitude: number;
+  longitude: number;
   radius?: number;
   keyword?: string;
 }): Promise<any[]> => {
-  if (!latitude || !longitude) {
-    throw new Error('Latitude and Longitude are required.');
-  }
-
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-
   if (!apiKey) {
     throw new Error('Google Maps API key is not configured.');
   }
@@ -70,15 +65,20 @@ export const findNearbyPlacesDetailed = async ({
     timeout: 10000, // 10 seconds timeout
   });
 
-  // Return results including place_id
-  return response.data.results.map((result) => ({
-    name: result.name,
-    geometry: result.geometry,
-    rating: result.rating,
-    business_status: result.business_status,
-    place_id: result.place_id, // Extract place_id
+  // Map the location from geometry.location
+  const results = response.data.results.map((result) => ({
+    name: result.name || 'Unknown',
+    location: result.geometry?.location || null, // Extract the correct geometry.location
+    address: result.vicinity || 'No address available',
+    rating: result.rating || 0,
+    business_status: result.business_status || 'UNKNOWN',
+    place_id: result.place_id || '',
   }));
+
+  console.log('Mapped gas stations:', results); // Debugging log
+  return results;
 };
+
 export interface TrafficStatusResult {
   origin: LatLngLiteral;
   destination: LatLngLiteral;

@@ -32,7 +32,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-export const authorize = (roles: Array<'admin' | 'user'>) => {
+export const authorizeAdmin = (roles: Array<'admin' | 'user'>) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     const user = (req as AuthenticatedRequest).user;
 

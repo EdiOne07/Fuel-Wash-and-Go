@@ -17,6 +17,7 @@ export interface IGasStation extends Document {
   status: Status;
   washingStationId?: mongoose.Types.ObjectId;
   rating: number;
+  place_id: string;
 }
 
 const GasStationSchema = new Schema<IGasStation>({
@@ -41,6 +42,7 @@ const GasStationSchema = new Schema<IGasStation>({
   },
   washingStationId: { type: mongoose.Schema.Types.ObjectId, ref: 'WashingStation' },
   rating: { type: Number, default: 0 },
+  place_id: {type: String, required: true}
 });
 
 GasStationSchema.index({ location: '2dsphere' });

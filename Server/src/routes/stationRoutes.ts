@@ -1,14 +1,14 @@
 // src/routes/stationRoutes.ts
 import { Router } from 'express';
-import * as stationController from '../controllers/stationController';
-import { authenticate, authorizeAdmin } from '../middleware/authMiddleware';
+import * as gasStationController from '../controllers/gasStationsController';
+import * as authMiddleware from '../middleware/authMiddleware';
 
 const router = Router();
 
-router.get('/stations', stationController.getStations);
-router.get('/stations/:id', stationController.getStationById);
-router.post('/stations', authenticate, authorizeAdmin, stationController.addStation);
-router.put('/stations/:id', authenticate, authorizeAdmin, stationController.updateStation);
-router.delete('/stations/:id', authenticate, authorizeAdmin, stationController.deleteStation);
+router.get('/stations', authMiddleware.authenticate, gasStationController.getStations);
+router.get('/stations/:id', authMiddleware.authenticate, gasStationController.getStationById);
+router.post('/stations',authMiddleware.authenticate,authMiddleware.authorizeAdmin(['admin']), gasStationController.createStation);
+router.put('/stations/:id',authMiddleware.authenticate,authMiddleware.authorizeAdmin(['admin']),gasStationController.updateStation);
+router.delete('/stations/:id',authMiddleware.authenticate,authMiddleware.authorizeAdmin(['admin']),gasStationController.deleteStation);
 
 export default router;

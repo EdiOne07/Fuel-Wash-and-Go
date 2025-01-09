@@ -28,7 +28,7 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
           throw new Error("Session ID not found. Please log in again.");
         }
   
-        const endpoint = `${apiUrl}/maps/gas-station/place_id=${stationId}`;
+        const endpoint = `${apiUrl}/maps/gas-station/${stationId}`;
         console.log("Fetching station details from:", endpoint);
   
         const response = await fetch(endpoint, {
@@ -87,16 +87,26 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
       <Text style={styles.title}>{stationDetails.name}</Text>
       <Text style={styles.subtitle}>{stationDetails.address}</Text>
 
-      {Object.keys(stationDetails).map(
-        (key) =>
-          key !== "name" &&
-          key !== "address" && (
-            <View key={key} style={styles.detailRow}>
-              <Text style={styles.detailKey}>{key}:</Text>
-              <Text style={styles.detailValue}>{stationDetails[key]}</Text>
-            </View>
-          )
+      {Object.keys(stationDetails).map((key) => {
+  const value = stationDetails[key];
+
+  // Skip "name" and "address"
+  if (key === "name" || key === "address") {
+    return null;
+  }
+
+  // Handle objects differently
+  return (
+    <View key={key} style={styles.detailRow}>
+      <Text style={styles.detailKey}>{key}:</Text>
+      {typeof value === "object" && value !== null ? (
+        <Text style={styles.detailValue}>{JSON.stringify(value, null, 2)}</Text>
+      ) : (
+        <Text style={styles.detailValue}>{value}</Text>
       )}
+    </View>
+  );
+})}
 
       <Button title="Back to Map" onPress={() => navigation.goBack()} />
     </ScrollView>

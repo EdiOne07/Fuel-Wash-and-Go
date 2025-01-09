@@ -6,13 +6,16 @@ import { getPlaceDetails } from "../services/googleMapsService";
  * Fetch nearby gas stations using Google Maps API
  */
 import { Client } from '@googlemaps/google-maps-services-js';
+import { fetchGasPrices } from '../services/gasPriceService';
 
 const client = new Client();
+
 export const getStationDetails = async (req: Request, res: Response): Promise<void> => {
-  const { place_id } = req.query;
+  const { id: place_id } = req.params; // Extract place_id from params
+  console.log('Fetching details for place_id:', place_id);
 
   if (!place_id) {
-    res.status(400).json({ error: 'place_id is required' });
+    res.status(400).json({ error: 'place_id is required.' });
     return;
   }
 
@@ -24,13 +27,43 @@ export const getStationDetails = async (req: Request, res: Response): Promise<vo
 
     const response = await client.placeDetails({
       params: {
-        place_id: place_id as string,
+        place_id,
         key: apiKey,
       },
       timeout: 10000, // 10 seconds timeout
     });
+    
+    const result = response.data.result;
 
-    res.status(200).json(response.data.result);
+    // Extract location
+    const location = result.geometry?.location;
+
+    // Fetch gas prices
+    const gasPrice = location
+      ? await fetchGasPrices({ latitude: location.lat, longitude: location.lng })
+      : null;
+
+    // Fetch traffic status
+    const trafficData = location
+      ? await getTrafficStatus(location.lat, location.lng)
+      : null;
+
+    // Prepare the station details
+    const stationDetails = {
+      name: result.name || "Unknown",
+      address: result.formatted_address || "Address not available",
+      status: result.business_status || "UNKNOWN",
+      price: gasPrice || "Price not available",
+      opening_hours: result.opening_hours?.weekday_text || null,
+      traffic_status: trafficData?.trafficStatus || "Unknown",
+      duration: trafficData?.duration || null,
+      duration_in_traffic: trafficData?.durationInTraffic || null,
+      photo_url: result.photos?.[0]
+        ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${result.photos[0].photo_reference}&key=${apiKey}`
+        : null,
+    };
+
+    res.status(200).json(stationDetails);
   } catch (error) {
     console.error('Error fetching station details:', error);
     res.status(500).json({
@@ -40,9 +73,7 @@ export const getStationDetails = async (req: Request, res: Response): Promise<vo
   }
 };
 
-/**
- * Fetch gas stations with dynamic traffic status
- */
+
 export const getTrafficStatusForLocation = async (req: Request, res: Response): Promise<void> => {
   const { latitude, longitude, radius = 1000, keyword = 'gas station' } = req.query;
 
