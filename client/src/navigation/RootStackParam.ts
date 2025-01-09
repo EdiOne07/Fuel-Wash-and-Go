@@ -9,5 +9,6 @@ export type RootStackParamList = {
       stationType: "gas" | "washing";
     };
     Profile:undefined;
+    RouteScreen:undefined;
   };
   

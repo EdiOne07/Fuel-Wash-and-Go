@@ -9,6 +9,7 @@ import {
   Button,
   Image,
 } from "react-native";
+import * as Location from "expo-location"; // Import Expo Location API
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { apiUrl } from "../utils";
 import { StackScreenProps } from "@react-navigation/stack";
@@ -63,6 +64,7 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
         }
 
         const data = await response.json();
+        console.log("Station details fetched:", data);
         setStationDetails(data);
       } catch (error) {
         console.error("Error fetching station details:", error);
@@ -74,13 +76,22 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
 
     const fetchUserLocation = async () => {
       try {
-        const location = await AsyncStorage.getItem("userLocation");
-        if (location) {
-          const { latitude, longitude } = JSON.parse(location);
-          setUserLocation({ latitude, longitude });
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert(
+            "Permission Denied",
+            "Location permission is required to use this feature."
+          );
+          return;
         }
+
+        const location = await Location.getCurrentPositionAsync({});
+        const { latitude, longitude } = location.coords;
+        console.log("Fetched user location:", { latitude, longitude });
+        setUserLocation({ latitude, longitude });
       } catch (error) {
         console.error("Error fetching user location:", error);
+        Alert.alert("Error", "Failed to fetch user location.");
       }
     };
 
@@ -89,14 +100,29 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
   }, [stationId]);
 
   const handleDrive = async () => {
-    if (!userLocation || !stationDetails || !stationDetails.location) {
-      Alert.alert("Error", "Unable to fetch route. Missing location data.");
+    if (!userLocation) {
+      Alert.alert("Error", "User location not available.");
+      return;
+    }
+
+   
+    if (!stationDetails || !stationDetails.location) {
+      Alert.alert("Error", "Station location not available.");
       return;
     }
 
     const { latitude: originLat, longitude: originLng } = userLocation;
+    console.log("LOCATION USER", {originLat, originLng})
+    // Ensure stationDetails.geometry.location contains lat and lng
     const { lat: destLat, lng: destLng } = stationDetails.location;
+    console.log("LOCATION STATION", {destLat, destLng})
 
+    if (!destLat || !destLng) {
+      Alert.alert("Error", "Station latitude and longitude are missing.");
+      return;
+    }
+
+    console.log("Navigating to RouteScreen with:", { originLat, originLng, destLat, destLng });
     navigation.navigate("RouteScreen", { originLat, originLng, destLat, destLng });
   };
 
@@ -170,7 +196,7 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
         <View style={styles.infoBox}>
           <Text style={styles.sectionTitle}>Opening Hours</Text>
           {stationDetails.opening_hours.map((line: string, index: number) => (
-            <Text style={styles.detailText}>
+            <Text style={styles.detailText} key={index}>
               {line}
             </Text>
           ))}
@@ -276,6 +302,5 @@ const styles = StyleSheet.create({
     width: "90%",
   },
 });
-
 
 export default StationDetailsScreen;
