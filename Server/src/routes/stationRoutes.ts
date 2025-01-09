@@ -5,6 +5,7 @@ import * as authMiddleware from '../middleware/authMiddleware';
 
 const router = Router();
 
+
 router.get('/stations', authMiddleware.authenticate, gasStationController.getStations);
 router.get('/stations/:id', authMiddleware.authenticate, gasStationController.getStationById);
 router.post('/stations',authMiddleware.authenticate,authMiddleware.authorizeAdmin(['admin']), gasStationController.createStation);
