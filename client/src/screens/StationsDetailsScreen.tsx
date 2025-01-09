@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, ActivityIndicator, Alert, ScrollView, Button } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Button,
+  Image,
+} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { apiUrl } from "../utils";
 import { StackScreenProps } from "@react-navigation/stack";
@@ -11,7 +20,7 @@ type RootStackParamList = {
   };
 };
 
-type StationDetailsScreenProps = StackScreenProps<RootStackParamList, 'StationDetails'>;
+type StationDetailsScreenProps = StackScreenProps<RootStackParamList, "StationDetails">;
 
 const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navigation }) => {
   const { stationId } = route.params;
@@ -23,14 +32,14 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
       setLoading(true);
       try {
         const sessionId = await AsyncStorage.getItem("sessionId");
-  
+
         if (!sessionId) {
           throw new Error("Session ID not found. Please log in again.");
         }
-  
+
         const endpoint = `${apiUrl}/maps/gas-station/${stationId}`;
         console.log("Fetching station details from:", endpoint);
-  
+
         const response = await fetch(endpoint, {
           method: "GET",
           headers: {
@@ -38,21 +47,13 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
             sessionid: sessionId,
           },
         });
-  
-        console.log("Response Status:", response.status);
-        const responseBody = await response.text();
-        console.log("Response Body:", responseBody);
-  
-        if (response.status === 401) {
-          Alert.alert("Unauthorized", "Your session has expired. Please log in again.");
-          return;
-        }
-  
+
         if (!response.ok) {
+          const responseBody = await response.text();
           throw new Error(`HTTP Error! Status: ${response.status}, Body: ${responseBody}`);
         }
-  
-        const data = JSON.parse(responseBody);
+
+        const data = await response.json();
         setStationDetails(data);
       } catch (error) {
         console.error("Error fetching station details:", error);
@@ -61,10 +62,10 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
         setLoading(false);
       }
     };
-  
+
     fetchStationDetails();
-  }, [stationId, navigation]);
-  
+  }, [stationId]);
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -82,33 +83,87 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
     );
   }
 
+  const formatDuration = (seconds: number | undefined): string =>
+    seconds ? `${Math.ceil(seconds / 60)} minutes` : "N/A";
+
+  const formatStatus = (status: string | undefined): string => {
+    switch (status) {
+      case "OPERATIONAL":
+        return "Open";
+      case "CLOSED_TEMPORARILY":
+        return "Temporarily Closed";
+      case "UNKNOWN":
+        return "Status Unknown";
+      default:
+        return status || "Unknown";
+    }
+  };
+
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>{stationDetails.name}</Text>
-      <Text style={styles.subtitle}>{stationDetails.address}</Text>
-
-      {Object.keys(stationDetails).map((key) => {
-  const value = stationDetails[key];
-
-  // Skip "name" and "address"
-  if (key === "name" || key === "address") {
-    return null;
-  }
-
-  // Handle objects differently
-  return (
-    <View key={key} style={styles.detailRow}>
-      <Text style={styles.detailKey}>{key}:</Text>
-      {typeof value === "object" && value !== null ? (
-        <Text style={styles.detailValue}>{JSON.stringify(value, null, 2)}</Text>
+    <ScrollView contentContainerStyle={styles.scrollContent}>
+      {/* Photo Section */}
+      {stationDetails.photo_url ? (
+        <Image
+          source={{ uri: stationDetails.photo_url }}
+          style={styles.photo}
+          resizeMode="cover"
+        />
       ) : (
-        <Text style={styles.detailValue}>{value}</Text>
+        <View style={styles.noPhotoContainer}>
+          <Text style={styles.noPhotoText}>No Photo Available</Text>
+        </View>
       )}
-    </View>
-  );
-})}
 
-      <Button title="Back to Map" onPress={() => navigation.goBack()} />
+      {/* Title and Address */}
+      <Text style={styles.title}>{stationDetails.name || "Unknown Name"}</Text>
+      <Text style={styles.subtitle}>{stationDetails.address || "Address not available"}</Text>
+
+      {/* General Information Section */}
+      <View style={styles.infoBox}>
+        <Text style={styles.sectionTitle}>General Information</Text>
+        <Text style={styles.detailText}>
+          <Text style={styles.detailLabel}>Status: </Text>
+          {formatStatus(stationDetails.status)}
+        </Text>
+        <Text style={styles.detailText}>
+          <Text style={styles.detailLabel}>Price: </Text>
+          {stationDetails.price || "Price not available"}
+        </Text>
+      </View>
+
+      {/* Opening Hours Section */}
+      {stationDetails.opening_hours && (
+        <View style={styles.infoBox}>
+          <Text style={styles.sectionTitle}>Opening Hours</Text>
+          {stationDetails.opening_hours.map((line: string, index: number) => (
+            <Text key={index} style={styles.detailText}>
+              {line}
+            </Text>
+          ))}
+        </View>
+      )}
+
+      {/* Traffic Information Section */}
+      <View style={styles.infoBox}>
+        <Text style={styles.sectionTitle}>Traffic Information</Text>
+        <Text style={styles.detailText}>
+          <Text style={styles.detailLabel}>Traffic Status: </Text>
+          {stationDetails.traffic_status || "N/A"}
+        </Text>
+        <Text style={styles.detailText}>
+          <Text style={styles.detailLabel}>Duration: </Text>
+          {formatDuration(stationDetails.duration)}
+        </Text>
+        <Text style={styles.detailText}>
+          <Text style={styles.detailLabel}>Duration in Traffic: </Text>
+          {formatDuration(stationDetails.duration_in_traffic)}
+        </Text>
+      </View>
+
+      {/* Back Button */}
+      <View style={styles.buttonContainer}>
+        <Button title="Back to Map" onPress={() => navigation.goBack()} />
+      </View>
     </ScrollView>
   );
 };
@@ -117,32 +172,76 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: "#f9f9f9",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: 20,
   },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
+  photo: {
+    width: "100%",
+    height: 200,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  noPhotoContainer: {
+    width: "100%",
+    height: 200,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#e0e0e0",
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  noPhotoText: {
+    fontSize: 16,
+    color: "#757575",
+  },
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    marginBottom: 10,
+    textAlign: "center",
+    marginBottom: 5,
   },
   subtitle: {
-    fontSize: 18,
+    fontSize: 16,
+    textAlign: "center",
     color: "gray",
     marginBottom: 20,
   },
-  detailRow: {
-    flexDirection: "row",
+  infoBox: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
     marginBottom: 10,
   },
-  detailKey: {
-    fontWeight: "bold",
-    marginRight: 10,
+  detailText: {
+    fontSize: 16,
+    marginBottom: 5,
   },
-  detailValue: {
-    flexShrink: 1,
+  detailLabel: {
+    fontWeight: "bold",
+  },
+  buttonContainer: {
+    marginTop: 20,
+    marginBottom: 40, // Add extra margin for safe area
+    alignSelf: "center",
+    width: "90%",
   },
 });
 
