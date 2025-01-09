@@ -5,7 +5,6 @@ import { View, StyleSheet, Dimensions, ActivityIndicator, Alert, Text, Button, M
 import { apiUrl } from "../utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRadius } from "../components/RadiusContext";
-import ProfileScreen from "./ProfileScreen";
 
 interface GasStation {
   name: string;
@@ -31,7 +30,7 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const { radius } = useRadius();
-  const [selectedStation, setSelectedStation] = useState<any>(null); // State for selected station
+  const [selectedStation] = useState<any>(null); // State for selected station
   const [modalVisible, setModalVisible] = useState(false); // Modal visibility state
 
   // Set header button for navigation

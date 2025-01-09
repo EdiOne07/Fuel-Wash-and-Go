@@ -14,7 +14,7 @@ type RootStackParamList = {
 type StationDetailsScreenProps = StackScreenProps<RootStackParamList, 'StationDetails'>;
 
 const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navigation }) => {
-  const { stationId, stationType } = route.params;
+  const { stationId } = route.params;
   const [stationDetails, setStationDetails] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
