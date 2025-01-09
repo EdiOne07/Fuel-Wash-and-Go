@@ -18,6 +18,12 @@ type RootStackParamList = {
     stationId: string;
     stationType: "gas" | "washing";
   };
+  RouteScreen: {
+    originLat: number;
+    originLng: number;
+    destLat: number;
+    destLng: number;
+  };
 };
 
 type StationDetailsScreenProps = StackScreenProps<RootStackParamList, "StationDetails">;
@@ -26,6 +32,9 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
   const { stationId } = route.params;
   const [stationDetails, setStationDetails] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchStationDetails = async () => {
@@ -63,8 +72,49 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
       }
     };
 
+    const fetchUserLocation = async () => {
+      try {
+        const location = await AsyncStorage.getItem("userLocation");
+        if (location) {
+          const { latitude, longitude } = JSON.parse(location);
+          setUserLocation({ latitude, longitude });
+        }
+      } catch (error) {
+        console.error("Error fetching user location:", error);
+      }
+    };
+
     fetchStationDetails();
+    fetchUserLocation();
   }, [stationId]);
+
+  const handleDrive = async () => {
+    if (!userLocation || !stationDetails || !stationDetails.location) {
+      Alert.alert("Error", "Unable to fetch route. Missing location data.");
+      return;
+    }
+
+    const { latitude: originLat, longitude: originLng } = userLocation;
+    const { lat: destLat, lng: destLng } = stationDetails.location;
+
+    navigation.navigate("RouteScreen", { originLat, originLng, destLat, destLng });
+  };
+
+  const formatDuration = (seconds: number | undefined): string =>
+    seconds ? `${Math.ceil(seconds / 60)} minutes` : "N/A";
+
+  const formatStatus = (status: string | undefined): string => {
+    switch (status) {
+      case "OPERATIONAL":
+        return "Open";
+      case "CLOSED_TEMPORARILY":
+        return "Temporarily Closed";
+      case "UNKNOWN":
+        return "Status Unknown";
+      default:
+        return status || "Unknown";
+    }
+  };
 
   if (loading) {
     return (
@@ -82,22 +132,6 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
       </View>
     );
   }
-
-  const formatDuration = (seconds: number | undefined): string =>
-    seconds ? `${Math.ceil(seconds / 60)} minutes` : "N/A";
-
-  const formatStatus = (status: string | undefined): string => {
-    switch (status) {
-      case "OPERATIONAL":
-        return "Open";
-      case "CLOSED_TEMPORARILY":
-        return "Temporarily Closed";
-      case "UNKNOWN":
-        return "Status Unknown";
-      default:
-        return status || "Unknown";
-    }
-  };
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -136,7 +170,7 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
         <View style={styles.infoBox}>
           <Text style={styles.sectionTitle}>Opening Hours</Text>
           {stationDetails.opening_hours.map((line: string, index: number) => (
-            <Text key={index} style={styles.detailText}>
+            <Text style={styles.detailText}>
               {line}
             </Text>
           ))}
@@ -160,28 +194,24 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
         </Text>
       </View>
 
-      {/* Back Button */}
+      {/* Buttons */}
       <View style={styles.buttonContainer}>
         <Button title="Back to Map" onPress={() => navigation.goBack()} />
+        <Button title="Drive" onPress={handleDrive} color="#007BFF" />
       </View>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#f9f9f9",
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 20,
-  },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: 20,
   },
   photo: {
     width: "100%",
@@ -238,11 +268,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 20,
     marginBottom: 40, // Add extra margin for safe area
     alignSelf: "center",
     width: "90%",
   },
 });
+
 
 export default StationDetailsScreen;

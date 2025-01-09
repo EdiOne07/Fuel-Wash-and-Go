@@ -9,9 +9,6 @@ import { Client } from '@googlemaps/google-maps-services-js';
 import { fetchGasPrices } from '../services/gasPriceService';
 import axios from "axios";
 
-export const getNearbyStations = async (req: Request, res: Response): Promise<void> => {
-  const { latitude, longitude, radius = 1000, keyword = 'gas station' } = req.query;
-
 
 const client = new Client();
 
