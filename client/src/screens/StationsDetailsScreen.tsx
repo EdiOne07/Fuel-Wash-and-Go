@@ -8,7 +8,9 @@ import {
   ScrollView,
   Button,
   Image,
+  Linking,
 } from "react-native";
+import * as Location from "expo-location"; // Import Expo Location API
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { apiUrl } from "../utils";
 import { StackScreenProps } from "@react-navigation/stack";
@@ -18,6 +20,12 @@ type RootStackParamList = {
     stationId: string;
     stationType: "gas" | "washing";
   };
+  RouteScreen: {
+    originLat: number;
+    originLng: number;
+    destLat: number;
+    destLng: number;
+  };
 };
 
 type StationDetailsScreenProps = StackScreenProps<RootStackParamList, "StationDetails">;
@@ -26,6 +34,9 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
   const { stationId } = route.params;
   const [stationDetails, setStationDetails] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchStationDetails = async () => {
@@ -54,6 +65,7 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
         }
 
         const data = await response.json();
+        console.log("Station details fetched:", data);
         setStationDetails(data);
       } catch (error) {
         console.error("Error fetching station details:", error);
@@ -63,8 +75,75 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
       }
     };
 
+    const fetchUserLocation = async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          Alert.alert(
+            "Permission Denied",
+            "Location permission is required to use this feature."
+          );
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({});
+        const { latitude, longitude } = location.coords;
+        console.log("Fetched user location:", { latitude, longitude });
+        setUserLocation({ latitude, longitude });
+      } catch (error) {
+        console.error("Error fetching user location:", error);
+        Alert.alert("Error", "Failed to fetch user location.");
+      }
+    };
+
     fetchStationDetails();
+    fetchUserLocation();
   }, [stationId]);
+
+  const handleDrive = async () => {
+    if (!userLocation) {
+      Alert.alert("Error", "User location not available.");
+      return;
+    }
+  
+    if (!stationDetails || !stationDetails.location) {
+      Alert.alert("Error", "Station location not available.");
+      return;
+    }
+  
+    const { latitude: originLat, longitude: originLng } = userLocation;
+    const { lat: destLat, lng: destLng } = stationDetails.location;
+  
+    // Construct the Google Maps URL
+    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}&travelmode=driving`;
+  
+    console.log("Redirecting to:", googleMapsUrl);
+  
+    // Open Google Maps
+    try {
+      await Linking.openURL(googleMapsUrl);
+    } catch (error) {
+      console.error("Error opening Google Maps:", error);
+      Alert.alert("Error", "Unable to open Google Maps.");
+    }
+  };
+  
+
+  const formatDuration = (seconds: number | undefined): string =>
+    seconds ? `${Math.ceil(seconds / 60)} minutes` : "N/A";
+
+  const formatStatus = (status: string | undefined): string => {
+    switch (status) {
+      case "OPERATIONAL":
+        return "Open";
+      case "CLOSED_TEMPORARILY":
+        return "Temporarily Closed";
+      case "UNKNOWN":
+        return "Status Unknown";
+      default:
+        return status || "Unknown";
+    }
+  };
 
   if (loading) {
     return (
@@ -82,22 +161,6 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
       </View>
     );
   }
-
-  const formatDuration = (seconds: number | undefined): string =>
-    seconds ? `${Math.ceil(seconds / 60)} minutes` : "N/A";
-
-  const formatStatus = (status: string | undefined): string => {
-    switch (status) {
-      case "OPERATIONAL":
-        return "Open";
-      case "CLOSED_TEMPORARILY":
-        return "Temporarily Closed";
-      case "UNKNOWN":
-        return "Status Unknown";
-      default:
-        return status || "Unknown";
-    }
-  };
 
   return (
     <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -136,7 +199,7 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
         <View style={styles.infoBox}>
           <Text style={styles.sectionTitle}>Opening Hours</Text>
           {stationDetails.opening_hours.map((line: string, index: number) => (
-            <Text key={index} style={styles.detailText}>
+            <Text style={styles.detailText} key={index}>
               {line}
             </Text>
           ))}
@@ -160,28 +223,24 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
         </Text>
       </View>
 
-      {/* Back Button */}
+      {/* Buttons */}
       <View style={styles.buttonContainer}>
         <Button title="Back to Map" onPress={() => navigation.goBack()} />
+        <Button title="Drive" onPress={handleDrive} color="#007BFF" />
       </View>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#f9f9f9",
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 20,
-  },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: 20,
   },
   photo: {
     width: "100%",
@@ -238,11 +297,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 20,
-    marginBottom: 40, // Add extra margin for safe area
+    marginBottom: 40,
     alignSelf: "center",
     width: "90%",
   },
 });
+
 
 export default StationDetailsScreen;
