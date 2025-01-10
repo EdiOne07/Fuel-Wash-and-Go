@@ -7,7 +7,6 @@ import HomePageScreen from "../screens/HomePageScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import { RadiusProvider } from "../components/RadiusContext";
 import StationDetailsScreen from "../screens/StationsDetailsScreen";
-import RouteScreen from "../screens/RouteScreen";
 import { RootStackParamList } from "./RootStackParam";
 
 const Stack = createStackNavigator<RootStackParamList>(); // Use RootStackParamList to type the navigator
@@ -41,11 +40,6 @@ const Navigation: React.FC = () => {
             name="StationDetails"
             component={StationDetailsScreen}
             options={{ title: "Station Details" }}
-          />
-          <Stack.Screen
-            name="RouteScreen"
-            component={RouteScreen}
-            options={{ title: "Route Details" }}
           />
         </Stack.Navigator>
       </RadiusProvider>

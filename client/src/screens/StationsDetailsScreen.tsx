@@ -8,6 +8,7 @@ import {
   ScrollView,
   Button,
   Image,
+  Linking,
 } from "react-native";
 import * as Location from "expo-location"; // Import Expo Location API
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -104,27 +105,29 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
       Alert.alert("Error", "User location not available.");
       return;
     }
-
-   
+  
     if (!stationDetails || !stationDetails.location) {
       Alert.alert("Error", "Station location not available.");
       return;
     }
-
+  
     const { latitude: originLat, longitude: originLng } = userLocation;
-    console.log("LOCATION USER", {originLat, originLng})
-    // Ensure stationDetails.geometry.location contains lat and lng
     const { lat: destLat, lng: destLng } = stationDetails.location;
-    console.log("LOCATION STATION", {destLat, destLng})
-
-    if (!destLat || !destLng) {
-      Alert.alert("Error", "Station latitude and longitude are missing.");
-      return;
+  
+    // Construct the Google Maps URL
+    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}&travelmode=driving`;
+  
+    console.log("Redirecting to:", googleMapsUrl);
+  
+    // Open Google Maps
+    try {
+      await Linking.openURL(googleMapsUrl);
+    } catch (error) {
+      console.error("Error opening Google Maps:", error);
+      Alert.alert("Error", "Unable to open Google Maps.");
     }
-
-    console.log("Navigating to RouteScreen with:", { originLat, originLng, destLat, destLng });
-    navigation.navigate("RouteScreen", { originLat, originLng, destLat, destLng });
   };
+  
 
   const formatDuration = (seconds: number | undefined): string =>
     seconds ? `${Math.ceil(seconds / 60)} minutes` : "N/A";
@@ -297,10 +300,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 20,
-    marginBottom: 40, // Add extra margin for safe area
+    marginBottom: 40,
     alignSelf: "center",
     width: "90%",
   },
 });
+
 
 export default StationDetailsScreen;

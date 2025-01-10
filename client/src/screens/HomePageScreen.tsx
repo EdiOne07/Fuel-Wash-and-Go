@@ -79,12 +79,6 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
           throw new Error("Session ID not found. Please log in again.");
         }
 
-        // console.log("Fetching gas stations:", {
-        //   latitude: location.latitude,
-        //   longitude: location.longitude,
-        //   radius,
-        // });
-
         const response = await fetch(
           `${apiUrl}/maps/nearby-gas-stations?latitude=${location.latitude}&longitude=${location.longitude}&radius=${radius * 1000}`,
           {
@@ -101,7 +95,6 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
         }
 
         const data = await response.json();
-        console.log("Gas stations response:", data); // Log the response for debugging
         
         setGasStations(data);
       } catch (error) {
@@ -223,7 +216,7 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
             <Callout onPress={() => handleInfoPress(station)}>
               <Text>{station.name}</Text>
               <Text>{station.address}</Text>
-              <Text style={styles.infoText}>Tap for more info</Text>
+              <Text style={styles.infoText}>Tap for info and route</Text>
             </Callout>
           </Marker>
            )
