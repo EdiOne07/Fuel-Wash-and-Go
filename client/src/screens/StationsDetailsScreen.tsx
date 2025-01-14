@@ -31,7 +31,7 @@ type RootStackParamList = {
 type StationDetailsScreenProps = StackScreenProps<RootStackParamList, "StationDetails">;
 
 const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navigation }) => {
-  const { stationId,stationType } = route.params;
+  const { stationId } = route.params;
   const [stationDetails, setStationDetails] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(
@@ -48,11 +48,8 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
           throw new Error("Session ID not found. Please log in again.");
         }
 
-        const endpoint =
-        stationType === "gas"
-          ? `${apiUrl}/maps/gas-station/${stationId}`
-          : `${apiUrl}/maps/washing-station/${stationId}`;
-      console.log("Fetching station details from:", endpoint);
+        const endpoint = `${apiUrl}/maps/gas-station/${stationId}`;
+        console.log("Fetching station details from:", endpoint);
 
         const response = await fetch(endpoint, {
           method: "GET",

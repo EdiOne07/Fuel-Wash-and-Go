@@ -12,7 +12,7 @@ export type RootStackParamList = {
         stationId: string;
         stationType: "gas" | "washing";
       
-    }
+    };
     Profile:undefined;
     RouteScreen:undefined;
   };
