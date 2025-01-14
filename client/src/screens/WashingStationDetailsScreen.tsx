@@ -16,7 +16,7 @@ import { apiUrl } from "../utils";
 import { StackScreenProps } from "@react-navigation/stack";
 
 type RootStackParamList = {
-  StationDetails: {
+  WashingStationDetails: {
     stationId: string;
     stationType: "gas" | "washing";
   };
@@ -28,10 +28,10 @@ type RootStackParamList = {
   };
 };
 
-type StationDetailsScreenProps = StackScreenProps<RootStackParamList, "StationDetails">;
+type WashingStationDetailsScreenProps = StackScreenProps<RootStackParamList, "WashingStationDetails">;
 
-const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navigation }) => {
-  const { stationId,stationType } = route.params;
+const WashingStationDetailsScreen: React.FC<WashingStationDetailsScreenProps> = ({ route, navigation }) => {
+  const { stationId } = route.params;
   const [stationDetails, setStationDetails] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(
@@ -48,11 +48,8 @@ const StationDetailsScreen: React.FC<StationDetailsScreenProps> = ({ route, navi
           throw new Error("Session ID not found. Please log in again.");
         }
 
-        const endpoint =
-        stationType === "gas"
-          ? `${apiUrl}/maps/gas-station/${stationId}`
-          : `${apiUrl}/maps/washing-station/${stationId}`;
-      console.log("Fetching station details from:", endpoint);
+        const endpoint = `${apiUrl}/maps/washing-station/${stationId}`;
+        console.log("Fetching station details from:", endpoint);
 
         const response = await fetch(endpoint, {
           method: "GET",
@@ -310,4 +307,4 @@ const styles = StyleSheet.create({
 });
 
 
-export default StationDetailsScreen;
+export default WashingStationDetailsScreen;

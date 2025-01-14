@@ -8,5 +8,6 @@ router.get('/nearby-gas-stations', authMiddleware.authenticate, googleMapsContro
 router.get('/traffic-status',authMiddleware.authenticate,googleMapsController.getTrafficStatusForLocation);
 router.get('/nearby-washing-stations',authMiddleware.authenticate,googleMapsController.getNearbyWashingStations);
 router.get('/gas-station/:id',authMiddleware.authenticate,googleMapsController.getStationDetails);
+router.get('/washing-station/:id',authMiddleware.authenticate,googleMapsController.getWashingStationDetails);
 
 export default router;
