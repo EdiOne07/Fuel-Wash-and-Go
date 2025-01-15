@@ -1,10 +1,21 @@
 import React, { useEffect, useState } from "react";
 import MapView, { Marker, Callout } from "react-native-maps";
 import * as Location from "expo-location";
-import { View, StyleSheet, Dimensions, ActivityIndicator, Alert, Text, Button, Modal } from "react-native";
+import {
+  View,
+  StyleSheet,
+  Dimensions,
+  ActivityIndicator,
+  Alert,
+  Text,
+  Button,
+  Modal,
+  TouchableOpacity,
+} from "react-native";
 import { apiUrl } from "../utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRadius } from "../components/RadiusContext";
+import { MaterialIcons } from "@expo/vector-icons";
 
 interface GasStation {
   name: string;
@@ -33,6 +44,8 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
   const [selectedStation] = useState<any>(null); // State for selected station
   const [modalVisible, setModalVisible] = useState(false); // Modal visibility state
 
+  const [mapRegion, setMapRegion] = useState<any>(null); // State to control map region
+
   // Set header button for navigation
   useEffect(() => {
     navigation.setOptions({
@@ -59,10 +72,18 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
       }
 
       let loc = await Location.getCurrentPositionAsync({});
+      const region = {
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      };
+
       setLocation({
         latitude: loc.coords.latitude,
         longitude: loc.coords.longitude,
       });
+      setMapRegion(region);
       setLoading(false);
     })();
   }, []);
@@ -95,7 +116,7 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
         }
 
         const data = await response.json();
-        
+
         setGasStations(data);
       } catch (error) {
         console.error("Error fetching gas stations:", error);
@@ -149,25 +170,38 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
   }, [location, radius]);
 
   const handleInfoPress = (station: GasStation | WashingStation) => {
-    console.log("Selected station:", station); // Debug log
-    console.log("Station place_id:", station.place_id); // Verify place_id exists
-    
     if (!station.place_id) {
       Alert.alert("Error", "Station place_id is missing!");
       return;
     }
 
-    
     const stationType = station.address.includes("Gas") ? "gas" : "washing";
-  
-    // Navigate to StationDetails and pass the required parameters
+
     navigation.navigate("StationDetails", {
-      stationId: station.place_id,  // Replace with a unique identifier like station.id if available
-      stationType: stationType, // "gas" or "washing"
+      stationId: station.place_id,
+      stationType: stationType,
     });
   };
-  
-  
+
+  const recenterToCurrentLocation = async () => {
+    try {
+      let loc = await Location.getCurrentPositionAsync({});
+      const newRegion = {
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      };
+      setMapRegion(newRegion);
+      setLocation({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+      });
+    } catch (error) {
+      console.error("Error recentering to location:", error);
+      Alert.alert("Error", "Failed to recenter map. Please try again.");
+    }
+  };
 
   if (errorMsg) {
     return (
@@ -189,58 +223,61 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
     <View style={styles.container}>
       <MapView
         style={styles.map}
-        initialRegion={{
-          latitude: location!.latitude,
-          longitude: location!.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
+        region={mapRegion}
+        onRegionChangeComplete={(region) => setMapRegion(region)}
       >
         {/* User Location Marker */}
-        <Marker
-          coordinate={{ latitude: location!.latitude, longitude: location!.longitude }}
-          title="You are here"
-          pinColor="green"
-        />
+        {location && (
+          <Marker
+            coordinate={{ latitude: location.latitude, longitude: location.longitude }}
+            title="You are here"
+            pinColor="green"
+          />
+        )}
 
         {/* Gas Station Markers */}
         {gasStations.map((station, index) => (
-           station.location && (
-          <Marker
-            key={index}
-            coordinate={{ latitude: station.location.lat, longitude: station.location.lng }}
-            title={station.name}
-            description={station.address}
-            pinColor="red"
-          >
-            <Callout onPress={() => handleInfoPress(station)}>
-              <Text>{station.name}</Text>
-              <Text>{station.address}</Text>
-              <Text style={styles.infoText}>Tap for info and route</Text>
-            </Callout>
-          </Marker>
-           )
+          station.location && (
+            <Marker
+              key={index}
+              coordinate={{ latitude: station.location.lat, longitude: station.location.lng }}
+              title={station.name}
+              description={station.address}
+              pinColor="red"
+            >
+              <Callout onPress={() => handleInfoPress(station)}>
+                <Text>{station.name}</Text>
+                <Text>{station.address}</Text>
+                <Text style={styles.infoText}>Tap for info and route</Text>
+              </Callout>
+            </Marker>
+          )
         ))}
 
         {/* Washing Station Markers */}
         {washingStations.map((station, index) => (
-           station.location && (
-          <Marker
-            key={index}
-            coordinate={{ latitude: station.location.lat, longitude: station.location.lng }}
-            title={station.name}
-            description={station.address}
-            pinColor="blue"
-          >
-            <Callout onPress={() => handleInfoPress(station)}>
-              <Text>{station.name}</Text>
-              <Text>{station.address}</Text>
-              <Text style={styles.infoText}>Tap for more info</Text>
-            </Callout>
-          </Marker>
-           )
+          station.location && (
+            <Marker
+              key={index}
+              coordinate={{ latitude: station.location.lat, longitude: station.location.lng }}
+              title={station.name}
+              description={station.address}
+              pinColor="blue"
+            >
+              <Callout onPress={() => handleInfoPress(station)}>
+                <Text>{station.name}</Text>
+                <Text>{station.address}</Text>
+                <Text style={styles.infoText}>Tap for more info</Text>
+              </Callout>
+            </Marker>
+          )
         ))}
       </MapView>
+
+      {/* Recenter Button */}
+      <TouchableOpacity style={styles.recenterButton} onPress={recenterToCurrentLocation}>
+        <MaterialIcons name="my-location" size={24} color="white" />
+      </TouchableOpacity>
 
       {/* Modal for Additional Information */}
       {selectedStation && (
@@ -277,6 +314,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  recenterButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "blue",
+    borderRadius: 50,
+    padding: 15,
+    elevation: 5,
+    alignItems: "center",
+    justifyContent: "center",
   },
   infoText: {
     color: "blue",
