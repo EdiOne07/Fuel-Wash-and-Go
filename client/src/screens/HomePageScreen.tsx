@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import MapView, { Marker, Callout } from "react-native-maps";
 import * as Location from "expo-location";
+import { Platform } from "react-native";
 import {
   View,
   StyleSheet,
@@ -15,7 +16,7 @@ import {
 import { apiUrl } from "../utils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRadius } from "../components/RadiusContext";
-import { MaterialIcons } from "@expo/vector-icons";
+import { MaterialIcons, Ionicons } from "@expo/vector-icons";
 
 interface GasStation {
   name: string;
@@ -41,11 +42,11 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const { radius } = useRadius();
-  const [selectedStation] = useState<any>(null); // State for selected station
-  const [modalVisible, setModalVisible] = useState(false); // Modal visibility state
+  const [selectedStation] = useState<any>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [mapRegion, setMapRegion] = useState<any>(null);
+  const mapRef = React.useRef<MapView>(null);
 
-  const [mapRegion, setMapRegion] = useState<any>(null); // State to control map region
-  const mapRef = React.useRef<MapView>(null)
   // Set header button for navigation
   useEffect(() => {
     navigation.setOptions({
@@ -183,36 +184,19 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
     });
   };
 
-  const recenterToCurrentLocation = async () => {
-    try {
-      // Request the user's current location
-      const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-  
-      // Update the `mapRegion` to recenter the map
-      const newRegion = {
-        latitude: loc.coords.latitude,
-        longitude: loc.coords.longitude,
-        latitudeDelta: 0.01, // Set a small region for close-up view
-        longitudeDelta: 0.01,
-      };
-      if (mapRef.current) {
-        mapRef.current.animateToRegion(newRegion, 1000); // 1000ms animation
-      }
-      // Update map and location states
-      setMapRegion(newRegion);
-      setLocation({
-        latitude: loc.coords.latitude,
-        longitude: loc.coords.longitude,
-      });
-    } catch (error) {
-      console.error("Error fetching location for recentering:", error);
-      Alert.alert("Error", "Failed to recenter map. Please try again.");
+  const recenterMap = () => {
+    if (mapRef.current && location) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        1000
+      );
     }
   };
-  
-
 
   if (errorMsg) {
     return (
@@ -233,15 +217,23 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
   return (
     <View style={styles.container}>
       <MapView
-        ref={mapRef} // Attach the reference
+        ref={mapRef}
         style={styles.map}
-        region={mapRegion || undefined} // Initial region
-        showsUserLocation={true} // Show user location on map
+        showsUserLocation={true}
+        showsMyLocationButton={Platform.OS === "android"}
+        initialRegion={
+          location
+            ? {
+                latitude: location.latitude,
+                longitude: location.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+              }
+            : undefined // Fallback if location is null
+        }
       >
-
-        {/* Gas Station Markers */}
-        {gasStations.map((station, index) => (
-          station.location && (
+        {gasStations.map((station, index) =>
+          station.location ? (
             <Marker
               key={index}
               coordinate={{ latitude: station.location.lat, longitude: station.location.lng }}
@@ -255,12 +247,11 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
                 <Text style={styles.infoText}>Tap for info and route</Text>
               </Callout>
             </Marker>
-          )
-        ))}
+          ) : null
+        )}
 
-        {/* Washing Station Markers */}
-        {washingStations.map((station, index) => (
-          station.location && (
+        {washingStations.map((station, index) =>
+          station.location ? (
             <Marker
               key={index}
               coordinate={{ latitude: station.location.lat, longitude: station.location.lng }}
@@ -274,13 +265,17 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
                 <Text style={styles.infoText}>Tap for more info</Text>
               </Callout>
             </Marker>
-          )
-        ))}
+          ) : null
+        )}
       </MapView>
 
-      {/* Recenter Button */}
+      {/* Recenter Button for iOS */}
+      {Platform.OS === "ios" && (
+        <TouchableOpacity style={styles.recenterButton} onPress={recenterMap}>
+          <Ionicons name="locate-outline" size={24} color="white" />
+        </TouchableOpacity>
+      )}
 
-      {/* Modal for Additional Information */}
       {selectedStation && (
         <Modal
           animationType="slide"
@@ -321,11 +316,15 @@ const styles = StyleSheet.create({
     bottom: 20,
     right: 20,
     backgroundColor: "blue",
-    borderRadius: 50,
-    padding: 15,
-    elevation: 5,
+    borderRadius: 25,
+    padding: 10,
     alignItems: "center",
     justifyContent: "center",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
   },
   infoText: {
     color: "blue",
