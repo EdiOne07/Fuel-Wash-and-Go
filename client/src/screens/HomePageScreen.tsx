@@ -45,7 +45,7 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
   const [modalVisible, setModalVisible] = useState(false); // Modal visibility state
 
   const [mapRegion, setMapRegion] = useState<any>(null); // State to control map region
-
+  const mapRef = React.useRef<MapView>(null)
   // Set header button for navigation
   useEffect(() => {
     navigation.setOptions({
@@ -185,23 +185,34 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
 
   const recenterToCurrentLocation = async () => {
     try {
-      let loc = await Location.getCurrentPositionAsync({});
+      // Request the user's current location
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+  
+      // Update the `mapRegion` to recenter the map
       const newRegion = {
         latitude: loc.coords.latitude,
         longitude: loc.coords.longitude,
-        latitudeDelta: 0.01,
+        latitudeDelta: 0.01, // Set a small region for close-up view
         longitudeDelta: 0.01,
       };
+      if (mapRef.current) {
+        mapRef.current.animateToRegion(newRegion, 1000); // 1000ms animation
+      }
+      // Update map and location states
       setMapRegion(newRegion);
       setLocation({
         latitude: loc.coords.latitude,
         longitude: loc.coords.longitude,
       });
     } catch (error) {
-      console.error("Error recentering to location:", error);
+      console.error("Error fetching location for recentering:", error);
       Alert.alert("Error", "Failed to recenter map. Please try again.");
     }
   };
+  
+
 
   if (errorMsg) {
     return (
@@ -222,18 +233,11 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
   return (
     <View style={styles.container}>
       <MapView
+        ref={mapRef} // Attach the reference
         style={styles.map}
-        region={mapRegion}
-        onRegionChangeComplete={(region) => setMapRegion(region)}
+        region={mapRegion || undefined} // Initial region
+        showsUserLocation={true} // Show user location on map
       >
-        {/* User Location Marker */}
-        {location && (
-          <Marker
-            coordinate={{ latitude: location.latitude, longitude: location.longitude }}
-            title="You are here"
-            pinColor="green"
-          />
-        )}
 
         {/* Gas Station Markers */}
         {gasStations.map((station, index) => (
@@ -275,9 +279,6 @@ const HomePageScreen = ({ navigation }: { navigation: any }) => {
       </MapView>
 
       {/* Recenter Button */}
-      <TouchableOpacity style={styles.recenterButton} onPress={recenterToCurrentLocation}>
-        <MaterialIcons name="my-location" size={24} color="white" />
-      </TouchableOpacity>
 
       {/* Modal for Additional Information */}
       {selectedStation && (
