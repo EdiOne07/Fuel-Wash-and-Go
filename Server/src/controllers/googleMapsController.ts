@@ -4,6 +4,7 @@ import {
   findNearbyPlacesDetailed,
   getTrafficStatus,
   getPlaceDetails,
+  findNearbyWashingPlacesDetailed,
 } from "../services/googleMapsService";
 import { LatLngLiteral } from "@googlemaps/google-maps-services-js";
 import { Client } from "@googlemaps/google-maps-services-js";
@@ -75,7 +76,67 @@ export const getStationDetails = async (req: Request, res: Response): Promise<vo
     });
   }
 };
+export const getWashingStationDetails = async (req: Request, res: Response): Promise<void> => {
+  const { id: place_id } = req.params;
 
+  if (!place_id) {
+    res.status(400).json({ error: "place_id is required." });
+    return;
+  }
+
+  try {
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    if (!apiKey) {
+      throw new Error("Google Maps API key is not configured.");
+    }
+
+    const response = await client.placeDetails({
+      params: {
+        place_id,
+        key: apiKey,
+      },
+      timeout: 10000, // 10 seconds timeout
+    });
+
+    const result = response.data.result;
+
+    // Extract location
+    const location = result.geometry?.location;
+
+    if (!location) {
+      res.status(400).json({ error: "Location data not available for this station." });
+      return;
+    }
+
+
+    // Fetch traffic status
+    const trafficData = await getTrafficStatus(location.lat, location.lng);
+
+    // Prepare the station details
+    const stationDetails = {
+      name: result.name || "Unknown",
+      address: result.formatted_address || "Address not available",
+      status: result.business_status || "UNKNOWN",
+
+      opening_hours: result.opening_hours?.weekday_text || null,
+      traffic_status: trafficData?.trafficStatus || "Unknown",
+      duration: trafficData?.duration || null,
+      duration_in_traffic: trafficData?.durationInTraffic || null,
+      photo_url: result.photos?.[0]
+        ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${result.photos[0].photo_reference}&key=${apiKey}`
+        : null,
+      location: location, // Include location in response
+    };
+
+    res.status(200).json(stationDetails);
+  } catch (error) {
+    console.error("Error fetching station details:", error);
+    res.status(500).json({
+      error: "Failed to fetch station details",
+      details: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
 export const getTrafficStatusForLocation = async (req: Request, res: Response): Promise<void> => {
   const { latitude, longitude, radius = 1000, keyword = "gas station" } = req.query;
 
@@ -118,12 +179,12 @@ export const getNearbyWashingStations = async (req: Request, res: Response): Pro
   }
 
   try {
-    const stations = await findNearbyPlaces(
-      parseFloat(latitude as string),
-      parseFloat(longitude as string),
-      parseInt(radius as string, 10),
-      keyword as string
-    );
+    const stations = await findNearbyWashingPlacesDetailed({
+      latitude: parseFloat(latitude as string),
+      longitude: parseFloat(longitude as string),
+      radius: parseInt(radius as string, 10),
+      keyword: keyword as string,
+    });
 
     res.status(200).json(stations);
   } catch (error) {

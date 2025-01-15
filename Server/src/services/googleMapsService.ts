@@ -93,6 +93,60 @@ export const findNearbyPlacesDetailed = async ({
     place_id: result.place_id || "",
   }));
 };
+export const findNearbyWashingPlacesDetailed = async ({
+  latitude,
+  longitude,
+  radius = 1000,
+  keyword = "car wash",
+}: {
+  latitude: number;
+  longitude: number;
+  radius?: number;
+  keyword?: string;
+}): Promise<any[]> => {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey) {
+    throw new Error("Google Maps API key is not configured.");
+  }
+
+  const allResults: any[] = [];
+  let nextPageToken: string | undefined = undefined;
+
+  do {
+    const response = await client.placesNearby({
+      params: {
+        location: { lat: latitude, lng: longitude },
+        radius,
+        keyword,
+        pagetoken: nextPageToken, // Use nextPageToken if available
+        key: apiKey,
+      },
+      timeout: 10000,
+    });
+
+    // Add results to the array
+    if (response.data.results) {
+      allResults.push(...response.data.results);
+    }
+
+    // Update nextPageToken (if no more results, this will be undefined)
+    nextPageToken = response.data.next_page_token;
+
+    // Delay for pagination (API requires a short delay before using next_page_token)
+    if (nextPageToken) {
+      await new Promise((resolve) => setTimeout(resolve, 2000)); // 2-second delay
+    }
+  } while (nextPageToken);
+
+  return allResults.map((result) => ({
+    name: result.name || "Unknown",
+    location: result.geometry?.location || null,
+    address: result.vicinity || "No address available",
+    rating: result.rating || 0,
+    business_status: result.business_status || "UNKNOWN",
+    place_id: result.place_id || "",
+  }));
+};
 
 export interface TrafficStatusResult {
   origin: LatLngLiteral;
